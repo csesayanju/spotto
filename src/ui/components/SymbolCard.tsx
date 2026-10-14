@@ -9,17 +9,19 @@ interface Props {
   onTap?: (symbol: SymbolId) => void;
   disabled?: boolean;
   label: string;
+  /** Symbol to ring, e.g. the match in a How to play example. */
+  highlight?: SymbolId;
 }
 
 /** Card Renderer: one symbol in the middle, the rest on a ring, random size and rotation. */
-export function SymbolCard({ card, seed, onTap, disabled, label }: Props) {
+export function SymbolCard({ card, seed, onTap, disabled, label, highlight }: Props) {
   const layout = useMemo(() => buildLayout(card, seed), [card, seed]);
   return (
     <div className="card" role="group" aria-label={label}>
       {layout.map(({ symbol, x, y, size, rot }) => (
         <button
           key={symbol}
-          className="symbol"
+          className={symbol === highlight ? "symbol hit" : "symbol"}
           disabled={disabled}
           onClick={() => onTap?.(symbol)}
           style={{ left: `${x}%`, top: `${y}%`, fontSize: `${size}cqw`, transform: `translate(-50%,-50%) rotate(${rot}deg)` }}

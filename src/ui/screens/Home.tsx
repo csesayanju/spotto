@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { createRoom, joinRoom } from "../../net/rooms";
+import { HowToPlay } from "../components/HowToPlay";
 
 const NAME_KEY = "spotto:name";
 
@@ -12,6 +13,7 @@ export function Home({ onEnter }: { onEnter: (code: string) => void }) {
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [rules, setRules] = useState(false);
 
   async function run(action: () => Promise<string>) {
     if (!name.trim()) return setError("Enter your name first.");
@@ -41,6 +43,8 @@ export function Home({ onEnter }: { onEnter: (code: string) => void }) {
         </button>
       </div>
       {error && <p className="error">{error}</p>}
+      <button className="link" onClick={() => setRules(true)}>How to play</button>
+      {rules && <HowToPlay onClose={() => setRules(false)} />}
       <p className="version">v{__APP_VERSION__}</p>
     </main>
   );

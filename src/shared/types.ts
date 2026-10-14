@@ -2,15 +2,18 @@
 export type Card = number[];
 export type SymbolId = number;
 export type PlayerId = string;
-export type GameMode = "tower";
+export type GameMode = "tower" | "well" | "gift";
 export type RoomStatus = "lobby" | "playing" | "finished";
 
 export interface PlayerState {
   name: string;
   ready: boolean;
   connected: boolean;
-  /** Index into deckOrder of this player's current top card, or -1 if none. */
+  /** Position in deckOrder of this player's current top card, or -1 if none. */
   topCard: number;
+  /** Well only: end (exclusive) of this player's pile in deckOrder. */
+  pileEnd?: number;
+  /** Cards that count for this mode: collected (Tower), left in pile (Well), held (Gift). */
   score: number;
   /** Epoch ms until which taps are ignored (wrong-tap penalty). */
   frozenUntil: number;
@@ -20,13 +23,15 @@ export interface GameState {
   mode: GameMode;
   /** Shuffled card indices for this game. */
   deckOrder: number[];
-  /** Position in deckOrder of the current center card. */
+  /** Position in deckOrder of the current center card (Well: the last card played). */
   centerPos: number;
   /** Increments every time a round is won; used to reject stale taps. */
   round: number;
   lastWinner: PlayerId | null;
   /** Symbol that won the last round, shown in the round banner. */
   lastMatch: SymbolId | null;
+  /** Gift only: who received the last card. */
+  lastTarget?: PlayerId | null;
 }
 
 export interface RoomMeta {

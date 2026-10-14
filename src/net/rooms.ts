@@ -110,7 +110,7 @@ export async function resetToLobby(code: string, room: Room): Promise<void> {
   for (const id of Object.keys(room.players)) {
     Object.assign(patch, {
       [`players/${id}/ready`]: false, [`players/${id}/score`]: 0,
-      [`players/${id}/topCard`]: -1, [`players/${id}/frozenUntil`]: 0,
+      [`players/${id}/topCard`]: -1, [`players/${id}/frozenUntil`]: 0, [`players/${id}/pileEnd`]: null,
     });
   }
   await update(ref(db, `rooms/${code}`), patch);

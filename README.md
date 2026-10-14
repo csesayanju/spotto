@@ -12,7 +12,7 @@ Capacitor for the Android app. Also runs in any mobile browser.
 |---|---|
 | Deck Generator | `src/shared/deck.ts` |
 | Shared Types, Config | `src/shared/` |
-| Rules Engine (Tower), host handover | `src/engine/` |
+| Rules Engine (Tower, Well, Gift), host handover | `src/engine/` |
 | Room Manager, rejoin, cleanup | `src/net/rooms.ts` |
 | Game State + Tap Arbiter | `src/net/game.ts` |
 | Presence | `src/net/presence.ts` |
@@ -89,4 +89,4 @@ repo's Releases page.
 ## Next up
 
 - Sounds and a win animation
-- More modes (The Well, Hot Potato)
+- More modes (Hot Potato)

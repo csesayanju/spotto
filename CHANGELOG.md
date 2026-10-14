@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.0
+
+- Two new modes: Well (empty your pile first) and Gift (hand the center card to an opponent; fewest cards wins)
+- The host picks the mode in the lobby; everyone sees the choice live
+- How to play guide from the home screen and lobby: the basics with a highlighted example, plus a page per mode
+- Results rank by each mode's goal (most or fewest cards)
+- Center card symbols are no longer faded
+- Fix: PR preview links (CI job was missing the checks permission)
+
 ## 0.1.1
 
 - Rejoin automatically after a reload or app switch

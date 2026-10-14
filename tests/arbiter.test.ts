@@ -44,7 +44,7 @@ describe("tower tap arbiter", () => {
   it("a full game ends with all cards dealt", () => {
     let { game, players } = setup(["a", "b"]);
     let turn = 0;
-    while (!tower.isOver(game)) {
+    while (!tower.isOver(game, players)) {
       const id = turn++ % 2 ? "b" : "a";
       const out = tower.resolveTap({ deck, game, players, playerId: id,
         symbol: correct(game, players, id), round: game.round, now: 0, penaltyMs: 0 });

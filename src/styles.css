@@ -75,3 +75,69 @@ button.link { border: 0; background: none; font-size: 1rem; font-weight: 500; op
 .banner { margin: 0; min-height: 1.6em; opacity: .7; font-weight: 700; transition: transform .15s ease; }
 .banner.show { opacity: 1; color: var(--sun); font-size: 1.25rem; transform: scale(1.06); }
 @media (prefers-reduced-motion: reduce) { .banner { transition: none; } .banner.show { transform: none; } }
+
+/* v0.2.0: modes, How to play */
+/* Symbols on view-only cards (center, examples) stay full strength. */
+.symbol:disabled { opacity: 1; }
+.symbol.hit { background: color-mix(in srgb, var(--sun) 40%, transparent); box-shadow: 0 0 0 max(3px, 1.5cqw) var(--sun), 0 0 0 max(5px, 2.5cqw) color-mix(in srgb, var(--sun) 35%, transparent); }
+
+.lobby { height: auto; min-height: 100%; }
+.modes { border: 0; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.modes legend { padding: 0; margin-bottom: 8px; opacity: .85; }
+.modes:disabled { opacity: 1; }
+.mode {
+  display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 12px 6px;
+  border-radius: 14px; background: rgba(255,255,255,.08); border: 2px solid transparent; cursor: pointer;
+}
+.modes:disabled .mode { cursor: default; }
+.modes:disabled .mode:not(.on) { opacity: .5; }
+.mode.on { border-color: var(--sun); background: rgba(246,196,69,.14); }
+.mode input { position: absolute; opacity: 0; pointer-events: none; }
+.mode:has(input:focus-visible) { outline: 3px solid var(--sun); outline-offset: 2px; }
+.mode-icon { font-size: 1.9rem; line-height: 1; }
+.mode strong { font-size: 1.05rem; }
+.mode-desc { margin: 0; text-align: center; opacity: .9; min-height: 2.6em; }
+button.link.inline { padding: 0; font-size: inherit; color: var(--sun); opacity: 1; }
+
+.sheet {
+  position: fixed; inset: 0; z-index: 10; background: rgba(6,22,21,.72);
+  display: flex; align-items: flex-end; justify-content: center;
+}
+.sheet-inner {
+  width: 100%; max-width: 480px; height: min(92%, 760px); display: flex; flex-direction: column; gap: 12px;
+  background: var(--felt); border-radius: 22px 22px 0 0; box-shadow: 0 -8px 30px rgba(0,0,0,.4);
+  padding: 18px 20px calc(env(safe-area-inset-bottom) + 18px);
+}
+.sheet-head { display: flex; align-items: center; justify-content: space-between; }
+.sheet-head h2 { margin: 0; font-size: 1.6rem; color: var(--sun); }
+button.icon { border: 0; padding: 6px 10px; font-size: 1.2rem; line-height: 1; }
+.tabs { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; flex-shrink: 0; }
+.tab { font-size: .95rem; padding: 8px 14px; white-space: nowrap; border-color: rgba(255,255,255,.3); }
+.tab.on { background: var(--card); border-color: var(--card); color: var(--ink); }
+.sheet-body { flex: 1; overflow-y: auto; line-height: 1.45; }
+.sheet-body h3 { margin: 16px 0 4px; font-size: 1.05rem; color: var(--sun); }
+.sheet-body p { margin: 0; }
+.lead { font-size: 1.1rem; }
+.rules { margin: 10px 0 0; padding-left: 1.3em; display: flex; flex-direction: column; gap: 8px; }
+.example { display: flex; justify-content: center; gap: 14px; margin: 14px 0 8px; }
+.example .card { width: min(36vw, 150px); box-shadow: 0 0 0 4px var(--sun), 0 6px 14px rgba(0,0,0,.3); }
+.caption { text-align: center; opacity: .85; }
+@media (min-width: 700px) { .sheet { align-items: center; } .sheet-inner { border-radius: 22px; } }
+
+.game.gift > .card { width: min(62vw, 30vh); }
+.opponents { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px 14px; width: 100%; justify-items: center; }
+.opponents[data-count="1"] { grid-template-columns: 1fr; }
+.opponents[data-count="5"], .opponents[data-count="6"], .opponents[data-count="7"] { grid-template-columns: repeat(3, 1fr); }
+.opponent { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; width: 100%; }
+.opponent .card { width: min(100%, 24vh); box-shadow: 0 0 0 4px var(--card), 0 6px 14px rgba(0,0,0,.3); }
+.opponents[data-count="1"] .opponent .card { width: min(62vw, 30vh); }
+.opponent figcaption { font-weight: 700; font-size: .95rem; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.opponent.got .card { box-shadow: 0 0 0 4px var(--sun), 0 6px 14px rgba(0,0,0,.3); }
+.opponents.frozen .card { filter: grayscale(1); box-shadow: 0 0 0 4px var(--coral); }
+
+.mode-tag { margin: 0; opacity: .8; font-weight: 700; }
+.results h1 { margin: 0; }
+/* Gift with 5+ opponents: smaller center card and tighter spacing so a full room fits one screen. */
+.game.gift:has(.opponents[data-count="5"], .opponents[data-count="6"], .opponents[data-count="7"]) { gap: 8px; }
+.game.gift:has(.opponents[data-count="5"], .opponents[data-count="6"], .opponents[data-count="7"]) > .card { width: min(56vw, 25vh); }
+.opponents[data-count="5"], .opponents[data-count="6"], .opponents[data-count="7"] { gap: 6px 10px; }
