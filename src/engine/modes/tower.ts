@@ -15,7 +15,7 @@ export const tower: ModeRules = {
     const players: Record<string, { topCard: number; score: number }> = {};
     playerIds.forEach((id, i) => (players[id] = { topCard: i, score: 1 }));
     return {
-      game: { mode: "tower", deckOrder, centerPos: playerIds.length, round: 0, lastWinner: null },
+      game: { mode: "tower", deckOrder, centerPos: playerIds.length, round: 0, lastWinner: null, lastMatch: null },
       players,
     };
   },
@@ -38,7 +38,7 @@ export const tower: ModeRules = {
 
     return {
       result: { kind: "win", round: game.round + 1 },
-      game: { ...game, centerPos: game.centerPos + 1, round: game.round + 1, lastWinner: playerId },
+      game: { ...game, centerPos: game.centerPos + 1, round: game.round + 1, lastWinner: playerId, lastMatch: symbol },
       players: { ...players, [playerId]: { ...me, topCard: game.centerPos, score: me.score + 1 } },
     };
   },

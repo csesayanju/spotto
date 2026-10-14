@@ -25,6 +25,8 @@ export interface GameState {
   /** Increments every time a round is won; used to reject stale taps. */
   round: number;
   lastWinner: PlayerId | null;
+  /** Symbol that won the last round, shown in the round banner. */
+  lastMatch: SymbolId | null;
 }
 
 export interface RoomMeta {

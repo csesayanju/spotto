@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ensureSignedIn } from "./net/firebase";
 import { trackPresence } from "./net/presence";
+import { leaveRoom, restoreRoom, saveRoomCode } from "./net/rooms";
 import { useRoom } from "./state/store";
 import { Game } from "./ui/screens/Game";
 import { Home } from "./ui/screens/Home";
@@ -9,20 +10,55 @@ import { Results } from "./ui/screens/Results";
 
 export default function App() {
   const [uid, setUid] = useState<string | null>(null);
+  const [authError, setAuthError] = useState<string | null>(null);
   const [code, setCode] = useState<string | null>(null);
-  const room = useRoom(code);
+  const [restoring, setRestoring] = useState(true);
+  const { room, loaded } = useRoom(code);
+  const stopPresence = useRef<(() => void) | null>(null);
 
-  useEffect(() => { ensureSignedIn().then(setUid); }, []);
+  // Sign in, then rejoin the last room if this device was in one.
+  useEffect(() => {
+    ensureSignedIn()
+      .then(async (id) => { setUid(id); setCode(await restoreRoom()); })
+      .catch((e) => setAuthError(e.code ?? e.message))
+      .finally(() => setRestoring(false));
+  }, []);
+
   useEffect(() => {
     if (!code) return;
-    let stop: (() => void) | undefined;
-    trackPresence(code).then((s) => (stop = s));
-    return () => stop?.();
+    saveRoomCode(code);
+    let cancelled = false;
+    trackPresence(code).then((stop) => {
+      if (cancelled) stop();
+      else stopPresence.current = stop;
+    });
+    return () => {
+      cancelled = true;
+      stopPresence.current?.();
+      stopPresence.current = null;
+    };
   }, [code]);
 
-  if (!uid) return <main className="screen"><p>Connecting…</p></main>;
-  if (!code || !room) return <Home onEnter={setCode} />;
-  if (room.meta.status === "lobby") return <Lobby code={code} room={room} uid={uid} />;
-  if (room.meta.status === "playing") return <Game code={code} room={room} uid={uid} />;
-  return <Results room={room} onLeave={() => setCode(null)} />;
+  // Room deleted, or we were removed from it: go home.
+  useEffect(() => {
+    if (code && loaded && uid && (!room || !room.players?.[uid])) {
+      saveRoomCode(null);
+      setCode(null);
+    }
+  }, [code, loaded, room, uid]);
+
+  async function leave() {
+    stopPresence.current?.(); // stop presence first so it can't re-add us
+    stopPresence.current = null;
+    if (code) await leaveRoom(code);
+    setCode(null);
+  }
+
+  if (authError) return <main className="screen"><p className="error">Sign-in failed: {authError}</p></main>;
+  if (!uid || restoring) return <main className="screen"><p>Connecting…</p></main>;
+  if (!code) return <Home onEnter={setCode} />;
+  if (!room || !room.players?.[uid]) return <main className="screen"><p>Joining room…</p></main>;
+  if (room.meta.status === "lobby") return <Lobby code={code} room={room} uid={uid} onLeave={leave} />;
+  if (room.meta.status === "playing" && room.game) return <Game code={code} room={room} uid={uid} onLeave={leave} />;
+  return <Results code={code} room={room} uid={uid} onLeave={leave} />;
 }

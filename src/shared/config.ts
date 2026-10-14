@@ -5,4 +5,6 @@ export const CONFIG = {
   maxPlayers: 8,
   roomCodeLength: 4,
   reconnectGraceMs: 30_000,
+  /** Rooms older than this can be deleted by anyone (abandoned-room sweep). */
+  roomMaxAgeMs: 6 * 60 * 60 * 1000,
 } as const;
