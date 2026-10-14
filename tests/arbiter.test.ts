@@ -28,6 +28,8 @@ describe("tower tap arbiter", () => {
     });
     expect(results).toEqual(["win", "stale", "stale"]);
     expect(players.a.score).toBe(2);
+    expect(game.lastWinner).toBe("a");
+    expect(game.lastMatch).not.toBeNull();
   });
 
   it("wrong tap freezes the player", () => {

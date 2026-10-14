@@ -8,21 +8,20 @@ Capacitor for the Android app. Also runs in any mobile browser.
 
 ## Project layout
 
-| Module | Path | Status |
-|---|---|---|
-| Deck Generator | `src/shared/deck.ts` | Done, tested |
-| Shared Types | `src/shared/types.ts` | Done |
-| Config | `src/shared/config.ts` | Done |
-| Rules Engine (Tower) | `src/engine/` | Done, tested |
-| Room Manager | `src/net/rooms.ts` | Basic, has TODOs |
-| Game State + Tap Arbiter | `src/net/game.ts` | Basic (Firebase transaction) |
-| Presence / Reconnect | `src/net/presence.ts` | Basic, has TODOs |
-| Client State Store | `src/state/store.ts` | Done |
-| Screens | `src/ui/screens/` | Placeholder UI |
-| Card Renderer | `src/ui/components/SymbolCard.tsx` | Done |
-| Feedback Layer | `src/ui/feedback.ts` | Haptics only |
-| Assets | `src/assets/symbols.ts` | 57 emoji |
-| Test Harness | `tests/` | Deck + arbiter simulation |
+| Module | Path |
+|---|---|
+| Deck Generator | `src/shared/deck.ts` |
+| Shared Types, Config | `src/shared/` |
+| Rules Engine (Tower), host handover | `src/engine/` |
+| Room Manager, rejoin, cleanup | `src/net/rooms.ts` |
+| Game State + Tap Arbiter | `src/net/game.ts` |
+| Presence | `src/net/presence.ts` |
+| Client State Store | `src/state/store.ts` |
+| Screens, Card Renderer, Feedback | `src/ui/` |
+| Assets | `src/assets/symbols.ts` |
+| Tests | `tests/` |
+| Android project | `android/` |
+| CI/CD | `.github/workflows/` |
 
 ## Setup
 
@@ -37,32 +36,57 @@ Capacitor for the Android app. Also runs in any mobile browser.
 
 `npm test` runs the deck and tap-arbiter tests.
 
-## Android
+## Android (local build)
 
-Needs Android Studio installed.
+Needs Android Studio. The `android/` folder is already in the repo.
 
 ```
-npx cap add android      # first time only
 npm run android:sync
 npm run android:open     # then Build > Build APK(s)
 ```
 
-Share the APK with friends directly (no Play Store fee).
+All APKs are signed with the shared key in `android/app/spotto-friends.keystore`,
+so a new version installs over the old one. That key is fine for sharing with
+friends but must not be used for the Play Store.
 
-## Push to GitHub
+## CI/CD (GitHub Actions + Firebase, free)
 
-Create an empty repo on GitHub (no README), then:
+- **Every pull request:** typecheck, tests, build, and a temporary preview link
+  posted as a PR comment (expires after 7 days).
+- **Every push to `main`:** typecheck, tests, build.
+- **Every version tag (`v*`):** deploys the web app and database rules to
+  Firebase, builds the APK, and publishes a GitHub Release with the APK attached.
+
+Preview links use the same database as the live game.
+
+### One-time setup
+
+1. **Firebase Hosting:** in the Firebase console, open Hosting and click Get started
+   (you can skip the CLI steps it shows).
+2. **Service account key:** Firebase console > Project settings > Service accounts >
+   Generate new private key. This downloads a JSON file.
+3. **GitHub secret:** repo > Settings > Secrets and variables > Actions > Secrets >
+   New repository secret. Name `FIREBASE_SERVICE_ACCOUNT`, value: the whole JSON file.
+   Then delete the downloaded file.
+4. **GitHub variables:** same page, Variables tab. Add the five `VITE_FIREBASE_*`
+   values from your `.env`.
+
+### Releasing a version
 
 ```
-git init && git add . && git commit -m "Initial boilerplate"
-git branch -M main
-git remote add origin https://github.com/<you>/spotto.git
-git push -u origin main
+git checkout -b release/0.1.2
+# make changes, bump "version" in package.json, update CHANGELOG.md
+git commit -am "0.1.2: ..."
+git push -u origin release/0.1.2      # open a PR, check CI + preview link
+# after merging the PR on GitHub:
+git checkout main && git pull
+git tag v0.1.2 && git push origin v0.1.2
 ```
+
+The live game is at `https://<project-id>.web.app`, and the APK is on the
+repo's Releases page.
 
 ## Next up
 
-- Room code collision retry, max players, block joining mid-game
-- Play again / back to lobby
-- Sounds and win animation
-- Clean up stale rooms
+- Sounds and a win animation
+- More modes (The Well, Hot Potato)

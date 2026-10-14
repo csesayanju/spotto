@@ -1,14 +1,21 @@
 import { useState } from "react";
 import { createRoom, joinRoom } from "../../net/rooms";
 
+const NAME_KEY = "spotto:name";
+
+function savedName(): string {
+  try { return localStorage.getItem(NAME_KEY) ?? ""; } catch { return ""; }
+}
+
 export function Home({ onEnter }: { onEnter: (code: string) => void }) {
-  const [name, setName] = useState("");
+  const [name, setName] = useState(savedName);
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   async function run(action: () => Promise<string>) {
     if (!name.trim()) return setError("Enter your name first.");
+    try { localStorage.setItem(NAME_KEY, name.trim()); } catch { /* ignore */ }
     setBusy(true); setError(null);
     try { onEnter(await action()); }
     catch (e) { setError((e as Error).message); }
@@ -34,6 +41,7 @@ export function Home({ onEnter }: { onEnter: (code: string) => void }) {
         </button>
       </div>
       {error && <p className="error">{error}</p>}
+      <p className="version">v{__APP_VERSION__}</p>
     </main>
   );
 }

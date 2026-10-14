@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Spotto</string>
+    <string name="title_activity_main">Spotto</string>
+    <string name="package_name">com.friends.spotto</string>
+    <string name="custom_url_scheme">com.friends.spotto</string>
+</resources>

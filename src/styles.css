@@ -67,3 +67,11 @@ button:disabled { opacity: .45; }
 .results li span { opacity: .7; margin-left: 8px; }
 
 @media (prefers-reduced-motion: reduce) { .symbol:active { scale: 1; } }
+
+/* v0.1.1 */
+button.room-code { border: 0; background: none; padding: 0; font-weight: 800; }
+button.link { border: 0; background: none; font-size: 1rem; font-weight: 500; opacity: .75; text-decoration: underline; }
+.version { margin: 8px 0 0; opacity: .4; font-size: .85rem; text-align: center; }
+.banner { margin: 0; min-height: 1.6em; opacity: .7; font-weight: 700; transition: transform .15s ease; }
+.banner.show { opacity: 1; color: var(--sun); font-size: 1.25rem; transform: scale(1.06); }
+@media (prefers-reduced-motion: reduce) { .banner { transition: none; } .banner.show { transform: none; } }
