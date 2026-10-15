@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.0
+
+- Install as an app from the website: "Install the app" button on Android and desktop Chrome, Add to Home Screen steps on iPhone. Opens full screen and still loads without a connection
+- New app icon and splash screen (web and Android), plus a favicon
+- Practice mode: 20 matches against the clock on your own, with your best time saved on the device
+- New mode: Potato (hot potato). Pass your top card to an opponent by matching it with theirs; fewest cards when the 💣 timer runs out wins
+- Timed games end automatically when the timer runs out
+
 ## 0.3.0
 
 - Sounds: countdown beeps, round won/lost, wrong tap, victory and defeat. Made in the browser, no downloads. Mute with the speaker button (remembered per device)

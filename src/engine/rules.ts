@@ -5,7 +5,7 @@ export interface ModeRules {
   /** Deals a game using `count` of the deck's `deckSize` cards (default: all of them). */
   setup(playerIds: PlayerId[], deckSize: number, rand?: () => number, count?: number): {
     game: GameState;
-    players: Record<PlayerId, Pick<PlayerState, "topCard" | "score" | "pileEnd">>;
+    players: Record<PlayerId, Pick<PlayerState, "topCard" | "score" | "pileEnd" | "pile">>;
   };
   resolveTap(input: TapInput): TapOutcome;
   isOver(game: GameState, players: Record<PlayerId, PlayerState>): boolean;
@@ -33,11 +33,11 @@ export interface TapOutcome {
   players: Record<PlayerId, PlayerState>;
 }
 
-/** Shared checks every mode runs first: stale round, game over, countdown, frozen player. */
+/** Shared checks every mode runs first: stale round, game over, countdown, time up, frozen player. */
 export function precheck(input: TapInput, over: boolean): TapOutcome | null {
   const { game, players, playerId, round, now } = input;
   const me = players[playerId];
-  if (!me || round !== game.round || over || now < (game.startsAt ?? 0))
+  if (!me || round !== game.round || over || now < (game.startsAt ?? 0) || now >= (game.endsAt ?? Infinity))
     return { result: { kind: "stale" }, game, players };
   if (me.frozenUntil > now) return { result: { kind: "frozen" }, game, players };
   return null;

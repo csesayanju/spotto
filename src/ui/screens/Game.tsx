@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { SYMBOLS } from "../../assets/symbols";
 import { MODES } from "../../engine";
-import { DECK, submitTap } from "../../net/game";
+import { DECK, endIfExpired, submitTap } from "../../net/game";
 import { serverNow, useCountdown } from "../../net/status";
 import { CONFIG } from "../../shared/config";
 import type { PlayerId, Room, SymbolId } from "../../shared/types";
@@ -26,6 +26,13 @@ export function Game({ code, room, uid, onLeave }: Props) {
   const banner = useRoundBanner(room, uid);
   const [confirmLeave, setConfirmLeave] = useState(false);
   const secondsLeft = Math.ceil(startLeft / 1000);
+  const timeLeft = useCountdown(game.endsAt, 250);
+  const timed = game.endsAt !== undefined && game.endsAt !== null;
+
+  // Hot Potato: when the timer runs out, end the game (whichever phone gets there first).
+  useEffect(() => {
+    if (timed && !waiting && timeLeft === 0) endIfExpired(code).catch(() => undefined);
+  }, [timed, waiting, timeLeft, code]);
 
   // Countdown beeps: one per second, then a rising "go".
   useEffect(() => { if (waiting) play("tick"); }, [waiting, secondsLeft]);
@@ -45,10 +52,20 @@ export function Game({ code, room, uid, onLeave }: Props) {
 
   const centerIdx = game.deckOrder[game.centerPos];
   const left = game.deckOrder.length - game.centerPos;
+  const timer = `💣 ${Math.ceil(timeLeft / 1000)}s`;
   const status =
     game.mode === "well" ? `${info.score(me.score)} in your pile`
     : game.mode === "gift" ? `${left} in the deck · you hold ${info.score(me.score)}`
+    : game.mode === "potato" ? <span className={timeLeft < 10_000 ? "fuse hot" : "fuse"}>{timer} · you hold {info.score(me.score)}</span>
     : `${left} cards left`;
+  const myCard = me.topCard >= 0 && (
+    <div className={frozen ? "mine frozen" : "mine"}>
+      <Stack cards={me.score} />
+      <SymbolCard key={me.topCard} className="pop" label="Your card" card={DECK[game.deckOrder[me.topCard]]}
+        seed={game.deckOrder[me.topCard] + 1000} onTap={(s) => tap(s)}
+        disabled={frozen || game.mode === "potato"} />
+    </div>
+  );
 
   return (
     <main className={`screen game ${game.mode}${waiting ? " waiting" : ""}`}>
@@ -62,21 +79,15 @@ export function Game({ code, room, uid, onLeave }: Props) {
         ))}
         <SoundToggle />
       </header>
-      <SymbolCard key={centerIdx} className="pop" label="Center card" card={DECK[centerIdx]} seed={centerIdx + 1} disabled />
+      {game.mode === "potato"
+        ? <Opponents room={room} uid={uid} frozen={frozen} onTap={tap} />
+        : <SymbolCard key={centerIdx} className="pop" label="Center card" card={DECK[centerIdx]} seed={centerIdx + 1} disabled />}
       <div className={banner ? "banner show" : "banner"} aria-live="polite">
         {frozen ? <FrozenBar left={frozenLeft} />
           : banner ? <Replay {...banner} />
           : status}
       </div>
-      {game.mode === "gift"
-        ? <Opponents room={room} uid={uid} frozen={frozen} onTap={tap} />
-        : (
-          <div className={frozen ? "mine frozen" : "mine"}>
-            <Stack cards={me.score} />
-            <SymbolCard key={me.topCard} className="pop" label="Your card" card={DECK[game.deckOrder[me.topCard]]}
-              seed={game.deckOrder[me.topCard] + 1000} onTap={(s) => tap(s)} disabled={frozen} />
-          </div>
-        )}
+      {game.mode === "gift" ? <Opponents room={room} uid={uid} frozen={frozen} onTap={tap} /> : myCard}
       <button className="link" onClick={() => setConfirmLeave(true)}>Leave game</button>
       {(waiting || go) && (
         <div className="countdown" aria-live="assertive">
@@ -92,7 +103,7 @@ export function Game({ code, room, uid, onLeave }: Props) {
   );
 }
 
-/** Gift: everyone else's top card. Tap the match on a card to give that player the center card. */
+/** Gift and Hot Potato: everyone else's top card. Tap the match on someone's card to send them a card. */
 function Opponents({ room, uid, frozen, onTap }: {
   room: Room; uid: string; frozen: boolean; onTap: (symbol: SymbolId, target: PlayerId) => void;
 }) {
@@ -104,9 +115,11 @@ function Opponents({ room, uid, frozen, onTap }: {
         const idx = game.deckOrder[p.topCard];
         return (
           <figure key={id} className={id === game.lastTarget ? "opponent got" : "opponent"}>
-            <SymbolCard label={`${p.name}'s card`} card={DECK[idx]} seed={idx + 2000}
-              onTap={(s) => onTap(s, id)} disabled={frozen} />
-            <figcaption>{p.name}</figcaption>
+            {p.topCard >= 0
+              ? <SymbolCard key={idx} className="pop" label={`${p.name}'s card`} card={DECK[idx]} seed={idx + 2000}
+                  onTap={(s) => onTap(s, id)} disabled={frozen} />
+              : <div className="card empty" aria-label={`${p.name} has no cards`} />}
+            <figcaption>{p.name}{game.mode === "potato" && <small> · {p.score}</small>}</figcaption>
           </figure>
         );
       })}
@@ -115,7 +128,7 @@ function Opponents({ room, uid, frozen, onTap }: {
 }
 
 /** Shrinking bar shown while you're frozen after a wrong tap. */
-function FrozenBar({ left }: { left: number }) {
+export function FrozenBar({ left }: { left: number }) {
   return (
     <span className="frozen-bar" role="status">
       Wrong symbol, frozen {(left / 1000).toFixed(1)}s
@@ -125,7 +138,7 @@ function FrozenBar({ left }: { left: number }) {
 }
 
 /** True for a moment right after the countdown ends, to flash "Go!". */
-function useGoFlash(startsAt: number | undefined, waiting: boolean): boolean {
+export function useGoFlash(startsAt: number | undefined, waiting: boolean): boolean {
   const [go, setGo] = useState(false);
   useEffect(() => {
     if (waiting || !startsAt) return;
@@ -139,7 +152,7 @@ function useGoFlash(startsAt: number | undefined, waiting: boolean): boolean {
 }
 
 /** Card edges under your card, so you can see your pile grow (Tower) or shrink (Well). */
-function Stack({ cards }: { cards: number }) {
+export function Stack({ cards }: { cards: number }) {
   const layers = Math.max(0, Math.min(3, cards - 1));
   return (
     <>
@@ -181,7 +194,9 @@ function useRoundBanner(room: Room, uid: string): Banner | null {
     const name = (id: PlayerId, you: string) => (id === uid ? you : room.players[id]?.name ?? "Someone");
     const symbol = SYMBOLS[game.lastMatch];
     setBanner({
-      text: game.mode === "gift" && game.lastTarget
+      text: game.mode === "potato" && game.lastTarget
+        ? `${name(game.lastWinner, "You")} passed ${name(game.lastTarget, "you")} a card with ${symbol}`
+        : game.mode === "gift" && game.lastTarget
         ? `${name(game.lastWinner, "You")} gave ${name(game.lastTarget, "you")} a card with ${symbol}`
         : `${name(game.lastWinner, "You")} got it with ${symbol}`,
       pair: game.lastPair ?? null,

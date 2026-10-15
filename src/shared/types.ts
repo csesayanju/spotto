@@ -2,7 +2,7 @@
 export type Card = number[];
 export type SymbolId = number;
 export type PlayerId = string;
-export type GameMode = "tower" | "well" | "gift";
+export type GameMode = "tower" | "well" | "gift" | "potato";
 export type RoomStatus = "lobby" | "playing" | "finished";
 export type GameLength = "quick" | "normal" | "full";
 
@@ -14,6 +14,8 @@ export interface PlayerState {
   topCard: number;
   /** Well only: end (exclusive) of this player's pile in deckOrder. */
   pileEnd?: number;
+  /** Hot Potato only: positions in deckOrder of this player's cards, top card last. */
+  pile?: number[];
   /** Cards that count for this mode: collected (Tower), left in pile (Well), held (Gift). */
   score: number;
   /** Epoch ms until which taps are ignored (wrong-tap penalty). */
@@ -33,6 +35,8 @@ export interface GameState {
   lastMatch: SymbolId | null;
   /** Server time the first round opens, after the 3-2-1 countdown. */
   startsAt?: number;
+  /** Server time the game ends regardless of cards (Hot Potato's timer). */
+  endsAt?: number;
   /** Deck indices of the two cards that matched last round, for the replay. */
   lastPair?: [number, number] | null;
   /** Gift only: who received the last card. */
