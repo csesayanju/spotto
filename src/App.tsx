@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { ensureSignedIn } from "./net/firebase";
 import { trackPresence } from "./net/presence";
 import { leaveRoom, restoreRoom, saveRoomCode } from "./net/rooms";
+import { useOnline } from "./net/status";
 import { useRoom } from "./state/store";
 import { Game } from "./ui/screens/Game";
 import { Home } from "./ui/screens/Home";
@@ -15,6 +16,7 @@ export default function App() {
   const [restoring, setRestoring] = useState(true);
   const { room, loaded } = useRoom(code);
   const stopPresence = useRef<(() => void) | null>(null);
+  const online = useOnline();
 
   // Sign in, then rejoin the last room if this device was in one.
   useEffect(() => {
@@ -54,11 +56,20 @@ export default function App() {
     setCode(null);
   }
 
-  if (authError) return <main className="screen"><p className="error">Sign-in failed: {authError}</p></main>;
-  if (!uid || restoring) return <main className="screen"><p>Connecting…</p></main>;
-  if (!code) return <Home onEnter={setCode} />;
-  if (!room || !room.players?.[uid]) return <main className="screen"><p>Joining room…</p></main>;
-  if (room.meta.status === "lobby") return <Lobby code={code} room={room} uid={uid} onLeave={leave} />;
-  if (room.meta.status === "playing" && room.game) return <Game code={code} room={room} uid={uid} onLeave={leave} />;
-  return <Results code={code} room={room} uid={uid} onLeave={leave} />;
+  return (
+    <>
+      {!online && <div className="offline-banner" role="status">You're offline. Reconnecting…</div>}
+      {screen()}
+    </>
+  );
+
+  function screen() {
+    if (authError) return <main className="screen"><p className="error">Sign-in failed: {authError}</p></main>;
+    if (!uid || restoring) return <main className="screen"><p>Connecting…</p></main>;
+    if (!code) return <Home onEnter={setCode} />;
+    if (!room || !room.players?.[uid]) return <main className="screen"><p>Joining room…</p></main>;
+    if (room.meta.status === "lobby") return <Lobby code={code} room={room} uid={uid} onLeave={leave} />;
+    if (room.meta.status === "playing" && room.game) return <Game code={code} room={room} uid={uid} onLeave={leave} />;
+    return <Results code={code} room={room} uid={uid} onLeave={leave} />;
+  }
 }

@@ -1,7 +1,11 @@
-import { useEffect } from "react";
-import { startGame } from "../../net/game";
+import { useEffect, useState } from "react";
+import { setMode, startGame } from "../../net/game";
 import { claimHostIfNeeded, setReady } from "../../net/rooms";
+import { CONFIG } from "../../shared/config";
 import type { Room } from "../../shared/types";
+import { Avatar } from "../components/Avatar";
+import { HowToPlay } from "../components/HowToPlay";
+import { MODE_INFO, MODE_ORDER } from "../modes";
 
 interface Props { code: string; room: Room; uid: string; onLeave: () => void }
 
@@ -10,34 +14,72 @@ export function Lobby({ code, room, uid, onLeave }: Props) {
   const me = room.players[uid];
   const isHost = room.meta.hostId === uid;
   const allReady = players.length >= 2 && players.every(([, p]) => p.ready);
+  const mode = room.meta.mode;
+  const [rules, setRules] = useState(false);
+  const [shared, setShared] = useState(false);
+  const readyCount = players.filter(([, p]) => p.ready).length;
 
   // If the host drops, someone else takes over so the game can still start.
   useEffect(() => { claimHostIfNeeded(code, room, uid).catch(() => undefined); }, [code, room, uid]);
 
   async function share() {
     const text = `Join my Spotto game! Room code: ${code}\n${location.origin}`;
-    try { await navigator.share?.({ text }) ?? navigator.clipboard.writeText(text); } catch { /* cancelled */ }
+    try {
+      if (navigator.share) await navigator.share({ text });
+      else { await navigator.clipboard.writeText(text); setShared(true); setTimeout(() => setShared(false), 2000); }
+    } catch { /* cancelled */ }
   }
 
   return (
     <main className="screen lobby">
-      <p>Share this code with your friends</p>
-      <button className="room-code" onClick={share} aria-label={`Room code ${code}, tap to share`}>{code}</button>
+      <section className="code-box">
+        <p>Room code</p>
+        <button className="room-code" onClick={share} aria-label={`Room code ${code}, tap to share`}>{code}</button>
+        <p className="hint">{shared ? "Copied! Send it to your friends." : "Tap the code to share it"}</p>
+      </section>
+
+      <fieldset className="modes" disabled={!isHost}>
+        <legend>{isHost ? "Pick a mode" : "Mode (the host picks)"}</legend>
+        {MODE_ORDER.map((m) => (
+          <label key={m} className={m === mode ? "mode on" : "mode"}>
+            <input type="radio" name="mode" checked={m === mode} onChange={() => setMode(code, m)} />
+            <span className="mode-icon" aria-hidden>{MODE_INFO[m].icon}</span>
+            <strong>{MODE_INFO[m].name}</strong>
+          </label>
+        ))}
+      </fieldset>
+      <p className="mode-desc">
+        {MODE_INFO[mode].tagline}{" "}
+        <button className="link inline" onClick={() => setRules(true)}>How to play</button>
+      </p>
+
+      <h2 className="section-title">
+        Players <span>{players.length}/{CONFIG.maxPlayers} · {readyCount} ready</span>
+      </h2>
       <ul className="players">
         {players.map(([id, p]) => (
-          <li key={id} className={p.ready ? "ready" : ""}>
-            {p.name}{id === room.meta.hostId && " (host)"}{!p.connected && " – offline"}
-            <span>{p.ready ? "Ready" : "Waiting"}</span>
+          <li key={id} className={[p.ready && "ready", !p.connected && "offline"].filter(Boolean).join(" ")}>
+            <Avatar id={id} name={p.name} />
+            <span className="who">
+              {p.name}{id === uid && <small> (you)</small>}
+              {id === room.meta.hostId && <span className="crown" title="Host" aria-label="host"> 👑</span>}
+              {!p.connected && <small className="off"> offline</small>}
+            </span>
+            <span className="state">{p.ready ? "✓ Ready" : "Waiting"}</span>
           </li>
         ))}
       </ul>
-      <button onClick={() => setReady(code, !me.ready)}>{me.ready ? "Not ready" : "I'm ready"}</button>
+      <button className={me.ready ? "" : "ready-btn"} onClick={() => setReady(code, !me.ready)}>
+        {me.ready ? "Not ready" : "I'm ready"}
+      </button>
+      {!isHost && <p className="hint center">The host starts the game when everyone is ready.</p>}
       {isHost && (
         <button className="primary" disabled={!allReady} onClick={() => startGame(code, room)}>
-          {players.length < 2 ? "Waiting for players" : allReady ? "Start game" : "Waiting for everyone to be ready"}
+          {players.length < 2 ? "Waiting for players" : allReady ? `Start ${MODE_INFO[mode].name}` : "Waiting for everyone to be ready"}
         </button>
       )}
       <button className="link" onClick={onLeave}>Leave room</button>
+      {rules && <HowToPlay initial={mode} onClose={() => setRules(false)} />}
     </main>
   );
 }

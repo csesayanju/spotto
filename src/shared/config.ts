@@ -2,6 +2,8 @@
 export const CONFIG = {
   order: 7,
   penaltyMs: 1500,
+  /** 3-2-1 countdown before the first round. */
+  countdownMs: 3000,
   maxPlayers: 8,
   roomCodeLength: 4,
   reconnectGraceMs: 30_000,

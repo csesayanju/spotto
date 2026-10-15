@@ -1,18 +1,43 @@
+import { MODES } from "../../engine";
 import { resetToLobby } from "../../net/rooms";
 import type { Room } from "../../shared/types";
+import { Avatar } from "../components/Avatar";
+import { MODE_INFO } from "../modes";
 
 interface Props { code: string; room: Room; uid: string; onLeave: () => void }
 
 export function Results({ code, room, uid, onLeave }: Props) {
-  const ranked = Object.entries(room.players).sort(([, a], [, b]) => b.score - a.score);
+  const mode = room.game?.mode ?? room.meta.mode;
+  const info = MODE_INFO[mode];
+  const sign = MODES[mode].winsWith === "most" ? -1 : 1;
+  const ranked = Object.entries(room.players).sort(([, a], [, b]) => sign * (a.score - b.score));
   const isHost = room.meta.hostId === uid;
   const top = ranked[0]?.[1].score;
-  const winners = ranked.filter(([, p]) => p.score === top).map(([, p]) => p.name);
+  const winners = ranked.filter(([, p]) => p.score === top).map(([id, p]) => (id === uid ? "You" : p.name));
+  // Same score, same place: 10, 10, 7 ranks as 1st, 1st, 3rd.
+  const place = (score: number) => ranked.findIndex(([, p]) => p.score === score);
+  const medal = (i: number) => ["🥇", "🥈", "🥉"][i] ?? `${i + 1}`;
+  const title = winners.length > 1 ? `Tie: ${winners.join(" & ")}`
+    : winners[0] === "You" ? "You win!" : `${winners[0]} wins`;
 
   return (
     <main className="screen results">
-      <h1>{winners.length > 1 ? `Tie: ${winners.join(" & ")}` : `${winners[0]} wins`}</h1>
-      <ol>{ranked.map(([id, p]) => <li key={id}>{p.name} <span>{p.score} cards</span></li>)}</ol>
+      <div className="trophy" aria-hidden>🏆</div>
+      <p className="mode-tag">{info.icon} {info.name}</p>
+      <h1>{title}</h1>
+      <ol className="ranking">
+        {ranked.map(([id, p]) => {
+          const i = place(p.score);
+          return (
+            <li key={id} className={[i === 0 && "first", id === uid && "me"].filter(Boolean).join(" ")}>
+              <span className="medal">{medal(i)}</span>
+              <Avatar id={id} name={p.name} size={32} />
+              <span className="who">{p.name}{id === uid && <small> (you)</small>}</span>
+              <span className="pts">{info.score(p.score)}</span>
+            </li>
+          );
+        })}
+      </ol>
       {isHost
         ? <button className="primary" onClick={() => resetToLobby(code, room)}>Play again</button>
         : <p>Waiting for the host to start another game…</p>}
