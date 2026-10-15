@@ -40,6 +40,40 @@ export async function restoreRoom(): Promise<string | null> {
   return null;
 }
 
+/* ---------- invite links ---------- */
+
+/**
+ * Link that opens straight into a room. Inside the Android app the page runs on
+ * localhost, so links point at the public site instead.
+ */
+export function roomLink(code: string): string {
+  const base = location.hostname === "localhost"
+    ? `https://${import.meta.env.VITE_FIREBASE_PROJECT_ID}.web.app`
+    : location.origin;
+  return `${base}/?room=${code}`;
+}
+
+let invite: string | null | undefined;
+
+/**
+ * Reads ?room=CODE from the address bar, then removes it so a reload doesn't rejoin.
+ * Cached, because React may call this more than once (StrictMode).
+ */
+export function takeInviteCode(): string | null {
+  if (invite === undefined) invite = readInvite();
+  return invite;
+}
+
+function readInvite(): string | null {
+  const params = new URLSearchParams(location.search);
+  const raw = params.get("room")?.toUpperCase().replace(/[^A-Z]/g, "") ?? "";
+  if (!params.has("room")) return null;
+  params.delete("room");
+  const rest = params.toString();
+  history.replaceState(null, "", location.pathname + (rest ? `?${rest}` : "") + location.hash);
+  return raw.length === CONFIG.roomCodeLength ? raw : null;
+}
+
 /* ---------- create / join / leave ---------- */
 
 export async function createRoom(name: string): Promise<string> {

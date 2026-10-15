@@ -88,5 +88,5 @@ repo's Releases page.
 
 ## Next up
 
-- Sounds and a win animation
 - More modes (Hot Potato)
+- Install as an app from the website (PWA), app icon and splash screen

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createRoom, joinRoom } from "../../net/rooms";
 import { Footer } from "../components/Footer";
 import { HowToPlay } from "../components/HowToPlay";
@@ -9,9 +9,15 @@ function savedName(): string {
   try { return localStorage.getItem(NAME_KEY) ?? ""; } catch { return ""; }
 }
 
-export function Home({ onEnter }: { onEnter: (code: string) => void }) {
+interface Props {
+  onEnter: (code: string) => void;
+  /** Room code from an invite link. */
+  invite?: string | null;
+}
+
+export function Home({ onEnter, invite }: Props) {
   const [name, setName] = useState(savedName);
-  const [code, setCode] = useState("");
+  const [code, setCode] = useState(invite ?? "");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [rules, setRules] = useState(false);
@@ -27,6 +33,14 @@ export function Home({ onEnter }: { onEnter: (code: string) => void }) {
 
   const join = () => run(async () => { await joinRoom(code, name.trim()); return code; });
 
+  // Invite link: join straight away if we already know this player's name.
+  const autoJoined = useRef(false);
+  useEffect(() => {
+    if (!invite || autoJoined.current || !name.trim()) return;
+    autoJoined.current = true;
+    join();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
     <main className="screen home">
       <div className="hero" aria-hidden>
@@ -34,6 +48,7 @@ export function Home({ onEnter }: { onEnter: (code: string) => void }) {
       </div>
       <h1 className="logo">Spotto</h1>
       <p className="tagline">Find the match before your friends do.</p>
+      {invite && <p className="invite">You're invited to room <b>{invite}</b>. Enter your name and tap Join.</p>}
 
       <label className="field">Your name
         <input value={name} maxLength={16} placeholder="What should friends call you?" autoComplete="nickname"

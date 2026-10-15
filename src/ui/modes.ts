@@ -1,5 +1,5 @@
 import { CONFIG } from "../shared/config";
-import type { GameMode } from "../shared/types";
+import type { GameLength, GameMode } from "../shared/types";
 
 /** Display copy for each mode: lobby picker, How to play, scores and results. */
 export interface ModeInfo {
@@ -66,3 +66,9 @@ export const BASICS = [
   `Tap a wrong symbol and your card freezes for ${CONFIG.penaltyMs / 1000} seconds.`,
   `Rooms hold 2 to ${CONFIG.maxPlayers} players. The host picks the mode in the lobby.`,
 ];
+
+export const LENGTH_INFO: Record<GameLength, { name: string }> = {
+  quick: { name: "Quick" },
+  normal: { name: "Normal" },
+  full: { name: "Full" },
+};

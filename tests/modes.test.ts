@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { MODES } from "../src/engine";
-import type { ModeRules } from "../src/engine/rules";
+import { winnersOf, type ModeRules } from "../src/engine/rules";
 import { generateDeck, sharedSymbol } from "../src/shared/deck";
 import type { GameState, PlayerState } from "../src/shared/types";
 
@@ -100,5 +100,33 @@ describe("countdown", () => {
     expect(early.result.kind).toBe("stale");
     const onTime = MODES.tower.resolveTap({ deck, game: timed, players, playerId: "a", symbol, round: 0, now: 5000, penaltyMs: 0 });
     expect(onTime.result.kind).toBe("win");
+  });
+});
+
+describe("game length", () => {
+  it("deals only the requested number of cards", () => {
+    const s = MODES.tower.setup(["a", "b"], deck.length, () => 0.3, 21);
+    expect(s.game.deckOrder).toHaveLength(21);
+    expect(new Set(s.game.deckOrder).size).toBe(21);
+    const w = MODES.well.setup(["a", "b", "c"], deck.length, () => 0.3, 21);
+    expect(w.players.a.score).toBe(6);
+  });
+});
+
+describe("room results", () => {
+  const p = (score: number) => ({ ...base(), score });
+
+  it("picks the highest or lowest score depending on the mode", () => {
+    expect(winnersOf(MODES.tower, { a: p(9), b: p(4) })).toEqual(["a"]);
+    expect(winnersOf(MODES.gift, { a: p(9), b: p(4) })).toEqual(["b"]);
+    expect(winnersOf(MODES.well, { a: p(0), b: p(0), c: p(3) })).toEqual(["a", "b"]);
+  });
+
+  it("records the two matched cards for the replay", () => {
+    const { game, players } = setup(MODES.tower, ["a", "b"]);
+    const symbol = sharedSymbol(card(game, players.a.topCard), center(game))!;
+    const out = MODES.tower.resolveTap({ deck, game, players, playerId: "a", symbol, round: 0, now: 0, penaltyMs: 0 });
+    const [mine, mid] = out.game.lastPair!;
+    expect(sharedSymbol(deck[mine], deck[mid])).toBe(symbol);
   });
 });

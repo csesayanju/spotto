@@ -1,8 +1,9 @@
 import { ref, runTransaction, update } from "firebase/database";
 import { MODES } from "../engine";
+import { winnersOf } from "../engine/rules";
 import { CONFIG } from "../shared/config";
 import { generateDeck } from "../shared/deck";
-import type { GameMode, PlayerId, Room, SymbolId, TapResult } from "../shared/types";
+import type { GameLength, GameMode, PlayerId, Room, SymbolId, TapResult } from "../shared/types";
 import { db, ensureSignedIn } from "./firebase";
 import { serverNow } from "./status";
 
@@ -11,7 +12,8 @@ export const DECK = generateDeck(CONFIG.order);
 /** Host only: deal cards and switch the room to playing. */
 export async function startGame(code: string, room: Room): Promise<void> {
   const ids = Object.keys(room.players);
-  const { game, players } = MODES[room.meta.mode].setup(ids, DECK.length);
+  const count = CONFIG.lengthCards[room.meta.length ?? "full"];
+  const { game, players } = MODES[room.meta.mode].setup(ids, DECK.length, Math.random, count);
   const patch: Record<string, unknown> = {
     game: { ...game, startsAt: serverNow() + CONFIG.countdownMs }, "meta/status": "playing",
   };
@@ -43,8 +45,10 @@ export async function submitTap(code: string, symbol: SymbolId, round: number, t
     result = out.result;
     if (out.result.kind === "stale" || out.result.kind === "frozen") return; // abort, no write
     const finished = rules.isOver(out.game, out.players);
+    const wins = { ...room.meta.wins };
+    if (finished) for (const id of winnersOf(rules, out.players)) wins[id] = (wins[id] ?? 0) + 1;
     return { ...room, game: out.game, players: out.players,
-      meta: { ...room.meta, status: finished ? "finished" : room.meta.status } };
+      meta: { ...room.meta, wins, status: finished ? "finished" : room.meta.status } };
   });
 
   return result;
@@ -53,4 +57,9 @@ export async function submitTap(code: string, symbol: SymbolId, round: number, t
 /** Host only, in the lobby: pick the mode for the next game. */
 export async function setMode(code: string, mode: GameMode): Promise<void> {
   await update(ref(db, `rooms/${code}/meta`), { mode });
+}
+
+/** Host only, in the lobby: pick how many cards the next game uses. */
+export async function setLength(code: string, length: GameLength): Promise<void> {
+  await update(ref(db, `rooms/${code}/meta`), { length });
 }
