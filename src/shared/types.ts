@@ -30,6 +30,8 @@ export interface GameState {
   lastWinner: PlayerId | null;
   /** Symbol that won the last round, shown in the round banner. */
   lastMatch: SymbolId | null;
+  /** Server time the first round opens, after the 3-2-1 countdown. */
+  startsAt?: number;
   /** Gift only: who received the last card. */
   lastTarget?: PlayerId | null;
 }

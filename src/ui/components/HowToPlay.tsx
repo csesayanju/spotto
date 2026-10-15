@@ -4,6 +4,7 @@ import { DECK } from "../../net/game";
 import { sharedSymbol } from "../../shared/deck";
 import type { GameMode } from "../../shared/types";
 import { BASICS, MODE_INFO, MODE_ORDER } from "../modes";
+import { Footer } from "./Footer";
 import { SymbolCard } from "./SymbolCard";
 
 type Tab = "basics" | GameMode;
@@ -54,6 +55,7 @@ export function HowToPlay({ initial = "basics", onClose }: Props) {
 
         <section className="sheet-body" role="tabpanel">
           {tab === "basics" ? <Basics /> : <ModePage mode={tab} />}
+          <Footer />
         </section>
 
         <button className="primary" onClick={onClose}>Got it</button>

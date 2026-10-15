@@ -32,11 +32,12 @@ export interface TapOutcome {
   players: Record<PlayerId, PlayerState>;
 }
 
-/** Shared checks every mode runs first: stale round, game over, frozen player. */
+/** Shared checks every mode runs first: stale round, game over, countdown, frozen player. */
 export function precheck(input: TapInput, over: boolean): TapOutcome | null {
   const { game, players, playerId, round, now } = input;
   const me = players[playerId];
-  if (!me || round !== game.round || over) return { result: { kind: "stale" }, game, players };
+  if (!me || round !== game.round || over || now < (game.startsAt ?? 0))
+    return { result: { kind: "stale" }, game, players };
   if (me.frozenUntil > now) return { result: { kind: "frozen" }, game, players };
   return null;
 }

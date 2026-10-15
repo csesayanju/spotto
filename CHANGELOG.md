@@ -1,13 +1,30 @@
 # Changelog
 
-## 0.2.0
+## 0.2.1
 
+First release of the 0.2 line (0.2.0 was never published).
+
+New modes and rules
 - Two new modes: Well (empty your pile first) and Gift (hand the center card to an opponent; fewest cards wins)
 - The host picks the mode in the lobby; everyone sees the choice live
 - How to play guide from the home screen and lobby: the basics with a highlighted example, plus a page per mode
 - Results rank by each mode's goal (most or fewest cards)
+
+UI and UX
+- 3-2-1 countdown before each game, synced to the server clock so every phone starts together
+- Frozen timer bar after a wrong tap; the center card pops in when it changes
+- "You're offline, reconnecting…" banner when the connection drops
+- Redesigned home screen; room code field accepts letters only and Enter joins
+- Lobby: player avatars, host crown, ready ticks, player count, tap-to-share hint
+- Score chips in game with the current leader highlighted
+- In-app confirmation when leaving a game (replaces the browser pop-up)
+- Results with medals, avatars and your row marked
+- Consistent buttons, spacing and animations; respects reduced-motion settings
+- © Sayan in the footer and How to play guide
+
+Fixes
 - Center card symbols are no longer faded
-- Fix: PR preview links (CI job was missing the checks permission)
+- PR preview links (CI job was missing the checks permission)
 
 ## 0.1.1
 

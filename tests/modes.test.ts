@@ -90,3 +90,15 @@ describe("gift", () => {
     expect(players.c.score).toBe(2);
   });
 });
+
+describe("countdown", () => {
+  it("taps before startsAt are ignored", () => {
+    const { game, players } = setup(MODES.tower, ["a", "b"]);
+    const timed = { ...game, startsAt: 5000 };
+    const symbol = sharedSymbol(card(game, players.a.topCard), center(game))!;
+    const early = MODES.tower.resolveTap({ deck, game: timed, players, playerId: "a", symbol, round: 0, now: 4999, penaltyMs: 0 });
+    expect(early.result.kind).toBe("stale");
+    const onTime = MODES.tower.resolveTap({ deck, game: timed, players, playerId: "a", symbol, round: 0, now: 5000, penaltyMs: 0 });
+    expect(onTime.result.kind).toBe("win");
+  });
+});

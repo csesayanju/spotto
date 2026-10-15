@@ -4,6 +4,7 @@ import { CONFIG } from "../shared/config";
 import { generateDeck } from "../shared/deck";
 import type { GameMode, PlayerId, Room, SymbolId, TapResult } from "../shared/types";
 import { db, ensureSignedIn } from "./firebase";
+import { serverNow } from "./status";
 
 export const DECK = generateDeck(CONFIG.order);
 
@@ -11,7 +12,9 @@ export const DECK = generateDeck(CONFIG.order);
 export async function startGame(code: string, room: Room): Promise<void> {
   const ids = Object.keys(room.players);
   const { game, players } = MODES[room.meta.mode].setup(ids, DECK.length);
-  const patch: Record<string, unknown> = { game, "meta/status": "playing" };
+  const patch: Record<string, unknown> = {
+    game: { ...game, startsAt: serverNow() + CONFIG.countdownMs }, "meta/status": "playing",
+  };
   for (const id of ids) {
     patch[`players/${id}/topCard`] = players[id].topCard;
     patch[`players/${id}/score`] = players[id].score;
@@ -35,7 +38,7 @@ export async function submitTap(code: string, symbol: SymbolId, round: number, t
     const rules = MODES[room.game.mode];
     const out = rules.resolveTap({
       deck: DECK, game: room.game, players: room.players, playerId: uid,
-      symbol, target, round, now: Date.now(), penaltyMs: CONFIG.penaltyMs,
+      symbol, target, round, now: serverNow(), penaltyMs: CONFIG.penaltyMs,
     });
     result = out.result;
     if (out.result.kind === "stale" || out.result.kind === "frozen") return; // abort, no write
