@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3.0
+
+- Sounds: countdown beeps, round won/lost, wrong tap, victory and defeat. Made in the browser, no downloads. Mute with the speaker button (remembered per device)
+- Replay after every round: the two cards that matched, with the shared symbol ringed
+- Invite links: sharing the room sends a link that opens straight into the room (and points at the website even when shared from the Android app)
+- Card stack under your card, with a count, so you can see your pile grow (Tower) or shrink (Well)
+- Game length: the host picks Quick (21 cards), Normal (35) or Full (57)
+- Room scoreboard: games won in the room are counted across rematches (🏆 in the lobby and results)
+- Fix: the round banner could stay on screen if another update arrived while it was showing
+
 ## 0.2.1
 
 First release of the 0.2 line (0.2.0 was never published).

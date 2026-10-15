@@ -52,3 +52,8 @@ function isPrime(n: number): boolean {
   for (let i = 2; i * i <= n; i++) if (n % i === 0) return false;
   return true;
 }
+
+/** Shuffled card indices for one game: `count` cards drawn from a deck of `deckSize`. */
+export function dealOrder(deckSize: number, count = deckSize, rand?: () => number): number[] {
+  return shuffle([...Array(deckSize).keys()], rand).slice(0, Math.min(count, deckSize));
+}

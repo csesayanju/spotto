@@ -2,7 +2,8 @@ import type { Card, GameState, PlayerId, PlayerState, SymbolId, TapResult } from
 
 /** Every game mode implements this. All functions must be pure. */
 export interface ModeRules {
-  setup(playerIds: PlayerId[], deckSize: number, rand?: () => number): {
+  /** Deals a game using `count` of the deck's `deckSize` cards (default: all of them). */
+  setup(playerIds: PlayerId[], deckSize: number, rand?: () => number, count?: number): {
     game: GameState;
     players: Record<PlayerId, Pick<PlayerState, "topCard" | "score" | "pileEnd">>;
   };
@@ -49,4 +50,13 @@ export function penalize({ game, players, playerId, now, penaltyMs }: TapInput):
     game,
     players: { ...players, [playerId]: { ...players[playerId], frozenUntil: now + penaltyMs } },
   };
+}
+
+/** Players with the winning score for this mode; more than one means a tie. */
+export function winnersOf(rules: ModeRules, players: Record<PlayerId, PlayerState>): PlayerId[] {
+  const entries = Object.entries(players);
+  if (!entries.length) return [];
+  const pick = rules.winsWith === "most" ? Math.max : Math.min;
+  const best = pick(...entries.map(([, p]) => p.score));
+  return entries.filter(([, p]) => p.score === best).map(([id]) => id);
 }

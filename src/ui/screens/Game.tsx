@@ -10,6 +10,7 @@ import { ConfirmSheet } from "../components/ConfirmSheet";
 import { SymbolCard } from "../components/SymbolCard";
 import { buzzWin, buzzWrong } from "../feedback";
 import { MODE_INFO } from "../modes";
+import { play, SoundToggle } from "../sound";
 
 interface Props { code: string; room: Room; uid: string; onLeave: () => void }
 
@@ -24,12 +25,17 @@ export function Game({ code, room, uid, onLeave }: Props) {
   const go = useGoFlash(game.startsAt, waiting);
   const banner = useRoundBanner(room, uid);
   const [confirmLeave, setConfirmLeave] = useState(false);
+  const secondsLeft = Math.ceil(startLeft / 1000);
+
+  // Countdown beeps: one per second, then a rising "go".
+  useEffect(() => { if (waiting) play("tick"); }, [waiting, secondsLeft]);
+  useEffect(() => { if (go) play("go"); }, [go]);
 
   async function tap(symbol: SymbolId, target?: PlayerId) {
     if (waiting) return;
     const res = await submitTap(code, symbol, game.round, target);
     if (res.kind === "win") buzzWin();
-    if (res.kind === "wrong") buzzWrong();
+    if (res.kind === "wrong") { buzzWrong(); play("wrong"); }
   }
 
   // Leader chip: best score for this mode (most or fewest cards), only once someone is ahead.
@@ -54,23 +60,27 @@ export function Game({ code, room, uid, onLeave }: Props) {
             {id === uid ? "You" : p.name} <b>{info.score(p.score)}</b>
           </span>
         ))}
+        <SoundToggle />
       </header>
       <SymbolCard key={centerIdx} className="pop" label="Center card" card={DECK[centerIdx]} seed={centerIdx + 1} disabled />
-      <p className={banner ? "banner show" : "banner"} aria-live="polite">
-        {frozen ? <FrozenBar left={frozenLeft} /> : banner ?? status}
-      </p>
+      <div className={banner ? "banner show" : "banner"} aria-live="polite">
+        {frozen ? <FrozenBar left={frozenLeft} />
+          : banner ? <Replay {...banner} />
+          : status}
+      </div>
       {game.mode === "gift"
         ? <Opponents room={room} uid={uid} frozen={frozen} onTap={tap} />
         : (
           <div className={frozen ? "mine frozen" : "mine"}>
-            <SymbolCard label="Your card" card={DECK[game.deckOrder[me.topCard]]}
+            <Stack cards={me.score} />
+            <SymbolCard key={me.topCard} className="pop" label="Your card" card={DECK[game.deckOrder[me.topCard]]}
               seed={game.deckOrder[me.topCard] + 1000} onTap={(s) => tap(s)} disabled={frozen} />
           </div>
         )}
       <button className="link" onClick={() => setConfirmLeave(true)}>Leave game</button>
       {(waiting || go) && (
         <div className="countdown" aria-live="assertive">
-          <span key={waiting ? Math.ceil(startLeft / 1000) : "go"}>{waiting ? Math.ceil(startLeft / 1000) : "Go!"}</span>
+          <span key={waiting ? secondsLeft : "go"}>{waiting ? secondsLeft : "Go!"}</span>
           {waiting && <small>{info.icon} {info.name}: {info.tagline}</small>}
         </div>
       )}
@@ -128,10 +138,40 @@ function useGoFlash(startsAt: number | undefined, waiting: boolean): boolean {
   return go;
 }
 
-/** Shows who won the last round, and with which symbol, for a moment. */
-function useRoundBanner(room: Room, uid: string): string | null {
+/** Card edges under your card, so you can see your pile grow (Tower) or shrink (Well). */
+function Stack({ cards }: { cards: number }) {
+  const layers = Math.max(0, Math.min(3, cards - 1));
+  return (
+    <>
+      {Array.from({ length: layers }, (_, i) => (
+        <span key={i} className="stack-layer" style={{ "--i": layers - i } as React.CSSProperties} aria-hidden />
+      ))}
+      {cards > 1 && <span className="stack-count" aria-label={`${cards} cards in your pile`}>×{cards}</span>}
+    </>
+  );
+}
+
+interface Banner { text: string; pair: [number, number] | null; match: SymbolId }
+
+/** Last round's two cards side by side, with the shared symbol ringed. */
+function Replay({ text, pair, match }: Banner) {
+  return (
+    <span className="replay">
+      {pair && (
+        <span className="replay-cards" aria-hidden>
+          <SymbolCard label="" card={DECK[pair[0]]} seed={pair[0] + 3000} highlight={match} disabled />
+          <SymbolCard label="" card={DECK[pair[1]]} seed={pair[1] + 4000} highlight={match} disabled />
+        </span>
+      )}
+      <span>{text}</span>
+    </span>
+  );
+}
+
+/** Who won the last round, with which symbol, shown for a moment. Also plays the round sound. */
+function useRoundBanner(room: Room, uid: string): Banner | null {
   const game = room.game!;
-  const [text, setText] = useState<string | null>(null);
+  const [banner, setBanner] = useState<Banner | null>(null);
   const lastRound = useRef(game.round);
 
   useEffect(() => {
@@ -140,12 +180,22 @@ function useRoundBanner(room: Room, uid: string): string | null {
     if (!game.lastWinner || game.lastMatch == null) return;
     const name = (id: PlayerId, you: string) => (id === uid ? you : room.players[id]?.name ?? "Someone");
     const symbol = SYMBOLS[game.lastMatch];
-    setText(game.mode === "gift" && game.lastTarget
-      ? `${name(game.lastWinner, "You")} gave ${name(game.lastTarget, "you")} a card with ${symbol}`
-      : `${name(game.lastWinner, "You")} got it with ${symbol}`);
-    const t = setTimeout(() => setText(null), 1400);
-    return () => clearTimeout(t);
-  }, [game.round, game.lastWinner, game.lastMatch, game.lastTarget, game.mode, room.players, uid]);
+    setBanner({
+      text: game.mode === "gift" && game.lastTarget
+        ? `${name(game.lastWinner, "You")} gave ${name(game.lastTarget, "you")} a card with ${symbol}`
+        : `${name(game.lastWinner, "You")} got it with ${symbol}`,
+      pair: game.lastPair ?? null,
+      match: game.lastMatch,
+    });
+    play(game.lastWinner === uid ? "win" : "lose");
+  }, [game.round, game.lastWinner, game.lastMatch, game.lastTarget, game.lastPair, game.mode, room.players, uid]);
 
-  return text;
+  // Its own effect, so other room updates during the 1.6 s don't cancel the timer.
+  useEffect(() => {
+    if (!banner) return;
+    const t = setTimeout(() => setBanner(null), 1600);
+    return () => clearTimeout(t);
+  }, [banner]);
+
+  return banner;
 }

@@ -4,6 +4,7 @@ export type SymbolId = number;
 export type PlayerId = string;
 export type GameMode = "tower" | "well" | "gift";
 export type RoomStatus = "lobby" | "playing" | "finished";
+export type GameLength = "quick" | "normal" | "full";
 
 export interface PlayerState {
   name: string;
@@ -32,6 +33,8 @@ export interface GameState {
   lastMatch: SymbolId | null;
   /** Server time the first round opens, after the 3-2-1 countdown. */
   startsAt?: number;
+  /** Deck indices of the two cards that matched last round, for the replay. */
+  lastPair?: [number, number] | null;
   /** Gift only: who received the last card. */
   lastTarget?: PlayerId | null;
 }
@@ -40,6 +43,10 @@ export interface RoomMeta {
   hostId: PlayerId;
   status: RoomStatus;
   mode: GameMode;
+  /** How many cards the next game uses. Missing means "full" (rooms from before 0.3). */
+  length?: GameLength;
+  /** Games won in this room, kept across rematches. */
+  wins?: Record<PlayerId, number>;
   createdAt: number;
 }
 

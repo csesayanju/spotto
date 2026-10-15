@@ -80,6 +80,20 @@ button.icon { border: 0; background: none; min-height: 0; padding: 6px 10px; fon
 
 .footer { display: flex; justify-content: center; gap: 6px; margin-top: 6px; font-size: .85rem; opacity: .5; }
 
+button.icon.sound { font-size: 1.25rem; padding: 4px 8px; }
+.code-box .sound { position: absolute; top: 6px; right: 6px; }
+.scores .sound { padding: 0 4px; font-size: 1.05rem; }
+.wins { font-size: .88rem; font-weight: 700; color: var(--sun); white-space: nowrap; }
+.lengths { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 4px; border-radius: 999px; background: var(--glass); }
+.lengths button {
+  min-height: 0; padding: 6px 4px; border: 0; background: transparent; font-size: 1rem; line-height: 1.1;
+  display: flex; flex-direction: column; align-items: center;
+}
+.lengths button small { font-size: .75rem; font-weight: 500; opacity: .7; }
+.lengths button.on { background: var(--card); color: var(--ink); }
+.lengths button:disabled { opacity: 1; }
+.lengths button:disabled:not(.on) { opacity: .45; }
+
 /* ============ home ============ */
 .home { gap: 12px; }
 .hero { display: flex; justify-content: center; margin-bottom: -6px; }
@@ -95,6 +109,8 @@ button.icon { border: 0; background: none; min-height: 0; padding: 6px 10px; fon
   transform: rotate(-3deg); text-shadow: 0 4px 0 rgba(0, 0, 0, .18);
 }
 .tagline { margin: 0 0 10px; opacity: .85; text-align: center; }
+.invite { margin: 0; padding: 10px 14px; border-radius: 12px; background: rgba(246, 196, 69, .16); text-align: center; }
+.invite b { color: var(--sun); letter-spacing: .12em; }
 .divider { display: flex; align-items: center; gap: 10px; margin: 4px 0 0; font-size: .9rem; opacity: .65; }
 .divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: var(--line); }
 .join { display: flex; gap: 8px; }
@@ -104,7 +120,7 @@ button.icon { border: 0; background: none; min-height: 0; padding: 6px 10px; fon
 
 /* ============ lobby ============ */
 .lobby { height: auto; min-height: 100%; }
-.code-box { text-align: center; padding: 12px; border-radius: var(--radius); background: var(--glass); }
+.code-box { position: relative; text-align: center; padding: 12px; border-radius: var(--radius); background: var(--glass); }
 .code-box p { margin: 0; }
 .room-code {
   border: 0; background: none; min-height: 0; padding: 0; margin: 2px 0;
@@ -164,6 +180,17 @@ button.icon { border: 0; background: none; min-height: 0; padding: 6px 10px; fon
 }
 .card.pop { animation: pop .28s cubic-bezier(.3, 1.6, .5, 1); }
 @keyframes pop { from { transform: scale(.82); opacity: .4; } to { transform: scale(1); opacity: 1; } }
+.mine { position: relative; }
+.mine .card { position: relative; z-index: 1; }
+.stack-layer {
+  position: absolute; inset: 0; border-radius: 50%; background: var(--card);
+  transform: translateY(calc(var(--i) * 5px)); filter: brightness(calc(1 - var(--i) * .08));
+  box-shadow: 0 0 0 6px var(--card), 0 0 0 10px var(--sun-deep);
+}
+.stack-count {
+  position: absolute; z-index: 2; right: -6px; bottom: -6px; padding: 2px 10px; border-radius: 999px;
+  background: var(--ink); color: var(--sun); font-weight: 800; box-shadow: 0 0 0 2px var(--sun);
+}
 .mine .card { box-shadow: 0 0 0 6px var(--card), 0 0 0 10px var(--sun), var(--shadow); }
 .mine.frozen .card { filter: grayscale(1); box-shadow: 0 0 0 6px var(--coral), var(--shadow); }
 .symbol {
@@ -178,8 +205,15 @@ button.icon { border: 0; background: none; min-height: 0; padding: 6px 10px; fon
   box-shadow: 0 0 0 max(3px, 1.5cqw) var(--sun), 0 0 0 max(5px, 2.5cqw) color-mix(in srgb, var(--sun) 35%, transparent);
 }
 
-.banner { margin: 0; min-height: 1.6em; opacity: .75; font-weight: 700; text-align: center; transition: transform .15s ease; }
-.banner.show { opacity: 1; color: var(--sun); font-size: 1.25rem; transform: scale(1.06); }
+.banner {
+  margin: 0; min-height: 44px; display: flex; align-items: center; justify-content: center;
+  opacity: .75; font-weight: 700; text-align: center;
+}
+.banner.show { opacity: 1; color: var(--sun); font-size: 1.1rem; }
+.replay { display: inline-flex; align-items: center; gap: 10px; animation: fade .2s ease-out; }
+.replay-cards { display: inline-flex; gap: 4px; }
+.replay-cards .card { width: 44px; box-shadow: 0 0 0 2px var(--sun); }
+.replay-cards .symbol.hit { box-shadow: 0 0 0 2px var(--sun); }
 .frozen-bar { position: relative; display: inline-block; padding-bottom: 6px; color: #ffc2c6; }
 .frozen-bar span {
   position: absolute; left: 0; right: 0; bottom: 0; height: 4px; border-radius: 2px;

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ensureSignedIn } from "./net/firebase";
 import { trackPresence } from "./net/presence";
-import { leaveRoom, restoreRoom, saveRoomCode } from "./net/rooms";
+import { leaveRoom, restoreRoom, saveRoomCode, takeInviteCode } from "./net/rooms";
 import { useOnline } from "./net/status";
 import { useRoom } from "./state/store";
 import { Game } from "./ui/screens/Game";
@@ -14,6 +14,7 @@ export default function App() {
   const [authError, setAuthError] = useState<string | null>(null);
   const [code, setCode] = useState<string | null>(null);
   const [restoring, setRestoring] = useState(true);
+  const [invite] = useState(takeInviteCode);
   const { room, loaded } = useRoom(code);
   const stopPresence = useRef<(() => void) | null>(null);
   const online = useOnline();
@@ -66,7 +67,7 @@ export default function App() {
   function screen() {
     if (authError) return <main className="screen"><p className="error">Sign-in failed: {authError}</p></main>;
     if (!uid || restoring) return <main className="screen"><p>Connecting…</p></main>;
-    if (!code) return <Home onEnter={setCode} />;
+    if (!code) return <Home onEnter={setCode} invite={invite} />;
     if (!room || !room.players?.[uid]) return <main className="screen"><p>Joining room…</p></main>;
     if (room.meta.status === "lobby") return <Lobby code={code} room={room} uid={uid} onLeave={leave} />;
     if (room.meta.status === "playing" && room.game) return <Game code={code} room={room} uid={uid} onLeave={leave} />;

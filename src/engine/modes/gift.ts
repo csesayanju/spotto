@@ -1,4 +1,4 @@
-import { shuffle } from "../../shared/deck";
+import { dealOrder } from "../../shared/deck";
 import type { GameState } from "../../shared/types";
 import { penalize, precheck, type ModeRules } from "../rules";
 
@@ -12,8 +12,8 @@ const isOver = (game: GameState) => game.centerPos >= game.deckOrder.length;
 export const gift: ModeRules = {
   winsWith: "fewest",
 
-  setup(playerIds, deckSize, rand) {
-    const deckOrder = shuffle([...Array(deckSize).keys()], rand);
+  setup(playerIds, deckSize, rand, count) {
+    const deckOrder = dealOrder(deckSize, count, rand);
     const players: Record<string, { topCard: number; score: number }> = {};
     playerIds.forEach((id, i) => (players[id] = { topCard: i, score: 1 }));
     return {
@@ -35,7 +35,8 @@ export const gift: ModeRules = {
 
     return {
       result: { kind: "win", round: game.round + 1 },
-      game: { ...game, centerPos: game.centerPos + 1, round: game.round + 1, lastWinner: playerId, lastMatch: symbol, lastTarget: target },
+      game: { ...game, centerPos: game.centerPos + 1, round: game.round + 1, lastWinner: playerId, lastMatch: symbol, lastTarget: target,
+        lastPair: [game.deckOrder[them.topCard], game.deckOrder[game.centerPos]] },
       players: { ...players, [target!]: { ...them, topCard: game.centerPos, score: them.score + 1 } },
     };
   },

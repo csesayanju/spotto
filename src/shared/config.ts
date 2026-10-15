@@ -6,6 +6,8 @@ export const CONFIG = {
   countdownMs: 3000,
   maxPlayers: 8,
   roomCodeLength: 4,
+  /** Cards used per game length; "full" is the whole deck. */
+  lengthCards: { quick: 21, normal: 35, full: 57 },
   reconnectGraceMs: 30_000,
   /** Rooms older than this can be deleted by anyone (abandoned-room sweep). */
   roomMaxAgeMs: 6 * 60 * 60 * 1000,
