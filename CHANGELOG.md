@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.8.1
+
+- Developer analytics page (📈, admins only): live rooms, players per day, games, players per game, game length, busiest hours, modes, themes, platforms (website / installed / APK), devices, app versions; 7, 14 or 30 days
+- Anonymous usage events (app opened, room created/joined, game started/finished, practice and daily runs, installs). No names or IP addresses; the database rules reject any extra fields
+- Google Analytics support for location and traffic (needs Google Analytics enabled for the Firebase project and a `VITE_FIREBASE_MEASUREMENT_ID` variable; off until then)
+- Privacy note in the footer explaining what's collected
+- Old analytics can be deleted from the page (keeps the last 30 days)
+
 ## 0.8.0
 
 Fun

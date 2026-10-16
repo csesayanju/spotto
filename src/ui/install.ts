@@ -1,5 +1,6 @@
 import { Capacitor } from "@capacitor/core";
 import { useEffect, useState } from "react";
+import { track } from "../net/analytics";
 
 /** Chrome's install event; not in the DOM typings yet. */
 interface InstallPromptEvent extends Event {
@@ -14,7 +15,7 @@ addEventListener("beforeinstallprompt", (e) => {
   deferred = e as InstallPromptEvent;
   listeners.forEach((l) => l());
 });
-addEventListener("appinstalled", () => { deferred = null; listeners.forEach((l) => l()); });
+addEventListener("appinstalled", () => { deferred = null; listeners.forEach((l) => l()); track("app_installed"); });
 
 const standalone = () =>
   matchMedia("(display-mode: standalone)").matches || (navigator as { standalone?: boolean }).standalone === true;

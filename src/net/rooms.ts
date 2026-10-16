@@ -6,6 +6,7 @@ import { CONFIG } from "../shared/config";
 import { matchChampions } from "../engine/match";
 import { spectatorsToPromote } from "../engine/roster";
 import type { PlayerId, PlayerState, Room, RoomMeta } from "../shared/types";
+import { track } from "./analytics";
 import { serverNow } from "./status";
 import { db, ensureSignedIn } from "./firebase";
 import { cancelPresence } from "./presence";
@@ -112,7 +113,7 @@ export async function createRoom(name: string): Promise<string> {
     const room: Room = { meta, players: { [uid]: newPlayer(name) } };
     // Transaction only succeeds if the code is free, so two rooms can't collide.
     const res = await runTransaction(ref(db, `rooms/${code}`), (cur) => (cur === null ? room : undefined));
-    if (res.committed) return code;
+    if (res.committed) { track("room_create"); return code; }
   }
   throw new Error("Couldn't create a room. Try again.");
 }
@@ -132,11 +133,13 @@ export async function joinRoom(code: string, name: string): Promise<void> {
   }
   if (room.meta.status === "lobby" && Object.keys(players).length < CONFIG.maxPlayers) {
     await set(ref(db, `rooms/${code}/players/${uid}`), newPlayer(name));
+    track("room_join", { role: "player" });
     return;
   }
   // Game in progress or room full: watch, and join the players at the next lobby.
   if (Object.keys(room.spectators ?? {}).length >= CONFIG.maxSpectators) throw new Error("That room is full right now. Try again later.");
   await set(ref(db, `rooms/${code}/spectators/${uid}`), { name, connected: true });
+  track("room_join", { role: "spectator" });
 }
 
 /**
