@@ -4,6 +4,11 @@ export const CONFIG = {
   penaltyMs: 1500,
   /** 3-2-1 countdown before the first round. */
   countdownMs: 3000,
+  /** Matches in a solo practice run. */
+  practiceCards: 20,
+  /** Hot Potato: most cards each player starts with, and the timer per game length. */
+  potatoPile: 5,
+  potatoSeconds: { quick: 45, normal: 75, full: 105 },
   maxPlayers: 8,
   roomCodeLength: 4,
   /** Cards used per game length; "full" is the whole deck. */

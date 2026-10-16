@@ -130,3 +130,43 @@ describe("room results", () => {
     expect(sharedSymbol(deck[mine], deck[mid])).toBe(symbol);
   });
 });
+
+describe("hot potato", () => {
+  const { potato } = MODES;
+
+  it("deals small piles", () => {
+    const { players } = setup(potato, ["a", "b", "c"]);
+    expect(Object.values(players).map((p) => p.score)).toEqual([5, 5, 5]);
+    expect(players.b.pile).toEqual([5, 6, 7, 8, 9]);
+    expect(players.b.topCard).toBe(9);
+  });
+
+  it("a match passes your top card onto their pile", () => {
+    const { game, players } = setup(potato, ["a", "b"]);
+    const symbol = sharedSymbol(card(game, players.a.topCard), card(game, players.b.topCard))!;
+    const out = potato.resolveTap({ deck, game, players, playerId: "a", symbol, target: "b", round: 0, now: 0, penaltyMs: 0 });
+    expect(out.result.kind).toBe("win");
+    expect(out.players.a.score).toBe(4);
+    expect(out.players.a.topCard).toBe(3);
+    expect(out.players.b.score).toBe(6);
+    expect(out.players.b.topCard).toBe(4);
+    expect(out.game.lastTarget).toBe("b");
+  });
+
+  it("ends when someone runs out, and rejects taps after the timer", () => {
+    let { game, players } = setup(potato, ["a", "b"]);
+    while (!potato.isOver(game, players)) {
+      const symbol = sharedSymbol(card(game, players.a.topCard), card(game, players.b.topCard))!;
+      const out = potato.resolveTap({ deck, game, players, playerId: "a", symbol, target: "b", round: game.round, now: 0, penaltyMs: 0 });
+      game = out.game; players = out.players;
+    }
+    expect(players.a.score).toBe(0);
+    expect(players.b.score).toBe(10);
+
+    const fresh = setup(potato, ["a", "b"]);
+    const timed = { ...fresh.game, endsAt: 1000 };
+    const symbol = sharedSymbol(card(timed, fresh.players.a.topCard), card(timed, fresh.players.b.topCard))!;
+    const late = potato.resolveTap({ deck, game: timed, players: fresh.players, playerId: "a", symbol, target: "b", round: 0, now: 1000, penaltyMs: 0 });
+    expect(late.result.kind).toBe("stale");
+  });
+});

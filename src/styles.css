@@ -118,6 +118,15 @@ button.icon.sound { font-size: 1.25rem; padding: 4px 8px; }
 .join input:not(:placeholder-shown) { letter-spacing: .35em; }
 .join button { min-width: 96px; }
 
+.home-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.home-actions button { padding-inline: 8px; }
+
+/* ============ practice ============ */
+.practice-bar { display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 8px; }
+.clock { font-size: 2rem; font-weight: 800; color: var(--sun); font-variant-numeric: tabular-nums; }
+.practice-done .lead small { opacity: .7; }
+.practice-done h1 { font-size: 3.4rem; font-variant-numeric: tabular-nums; }
+
 /* ============ lobby ============ */
 .lobby { height: auto; min-height: 100%; }
 .code-box { position: relative; text-align: center; padding: 12px; border-radius: var(--radius); background: var(--glass); }
@@ -127,7 +136,7 @@ button.icon.sound { font-size: 1.25rem; padding: 4px 8px; }
   font-size: 3.6rem; font-weight: 800; letter-spacing: .25em; text-indent: .25em; color: var(--sun);
 }
 
-.modes { border: 0; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.modes { border: 0; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
 .modes legend { padding: 0; margin-bottom: 8px; font-weight: 700; }
 .modes:disabled { opacity: 1; }
 .mode {
@@ -141,7 +150,7 @@ button.icon.sound { font-size: 1.25rem; padding: 4px 8px; }
 .mode input { position: absolute; opacity: 0; pointer-events: none; }
 .mode:has(input:focus-visible) { outline: 3px solid var(--sun); outline-offset: 2px; }
 .mode-icon { font-size: 1.9rem; line-height: 1; }
-.mode strong { font-size: 1.05rem; }
+.mode strong { font-size: .98rem; }
 .mode-desc { margin: 0; text-align: center; opacity: .9; min-height: 2.6em; }
 
 .section-title { display: flex; justify-content: space-between; align-items: baseline; margin: 4px 0 -4px; font-size: 1.1rem; }
@@ -246,6 +255,17 @@ button.icon.sound { font-size: 1.25rem; padding: 4px 8px; }
 /* 5+ opponents: smaller center card and tighter spacing so a full room fits one screen. */
 .game.gift:has(.opponents[data-count="5"], .opponents[data-count="6"], .opponents[data-count="7"]) { gap: 8px; }
 .game.gift:has(.opponents[data-count="5"], .opponents[data-count="6"], .opponents[data-count="7"]) > .card { width: min(56vw, 25vh); }
+
+/* Hot Potato: opponents on top, your card below. */
+.game.potato { gap: 10px; }
+.game.potato .mine .card { width: min(50vw, 24vh); }
+.game.potato .opponent .card { width: min(100%, 19vh); }
+.game.potato:has(.opponents[data-count="5"], .opponents[data-count="6"], .opponents[data-count="7"]) { gap: 8px; }
+.game.potato:has(.opponents[data-count="5"], .opponents[data-count="6"], .opponents[data-count="7"]) .mine .card { width: min(50vw, 23vh); }
+.opponent figcaption small { opacity: .7; }
+.card.empty { background: transparent; box-shadow: inset 0 0 0 3px var(--line) !important; }
+.fuse.hot { color: var(--coral); animation: pulse .5s ease-in-out infinite alternate; }
+@keyframes pulse { to { transform: scale(1.08); } }
 
 /* ============ results ============ */
 .results { text-align: center; }

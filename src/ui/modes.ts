@@ -14,7 +14,7 @@ export interface ModeInfo {
 
 const cards = (n: number) => `${n} card${n === 1 ? "" : "s"}`;
 
-export const MODE_ORDER: GameMode[] = ["tower", "well", "gift"];
+export const MODE_ORDER: GameMode[] = ["tower", "well", "gift", "potato"];
 
 export const MODE_INFO: Record<GameMode, ModeInfo> = {
   tower: {
@@ -53,6 +53,19 @@ export const MODE_INFO: Record<GameMode, ModeInfo> = {
       "Find a symbol the center card shares with an opponent's card.",
       "Tap that symbol on their card. Get there first and they receive the center card.",
       "Your own card doesn't count for matching, so keep your eyes on everyone else.",
+    ],
+    score: cards,
+  },
+  potato: {
+    name: "Potato",
+    icon: "🥔",
+    tagline: "Pass your cards on before the timer runs out. Fewest cards wins.",
+    goal: "Hold the fewest cards when the 💣 timer runs out, or get rid of all of yours first.",
+    steps: [
+      "Everyone starts with a small pile of cards, and a timer starts counting down.",
+      "Find the symbol your top card shares with an opponent's top card.",
+      "Tap that symbol on their card. Get there first and your card lands on their pile.",
+      "Cards fly back and forth, so keep passing. When time's up, the fewest cards wins.",
     ],
     score: cards,
   },

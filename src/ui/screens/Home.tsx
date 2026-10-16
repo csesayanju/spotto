@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { createRoom, joinRoom } from "../../net/rooms";
 import { Footer } from "../components/Footer";
 import { HowToPlay } from "../components/HowToPlay";
+import { useInstall } from "../install";
 
 const NAME_KEY = "spotto:name";
 
@@ -11,16 +12,18 @@ function savedName(): string {
 
 interface Props {
   onEnter: (code: string) => void;
+  onPractice: () => void;
   /** Room code from an invite link. */
   invite?: string | null;
 }
 
-export function Home({ onEnter, invite }: Props) {
+export function Home({ onEnter, onPractice, invite }: Props) {
   const [name, setName] = useState(savedName);
   const [code, setCode] = useState(invite ?? "");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [rules, setRules] = useState(false);
+  const installer = useInstall();
 
   async function run(action: () => Promise<string>) {
     if (!name.trim()) return setError("Enter your name first.");
@@ -66,7 +69,12 @@ export function Home({ onEnter, invite }: Props) {
       </form>
       {error && <p className="error" role="alert">{error}</p>}
 
-      <button className="secondary" onClick={() => setRules(true)}>📖 How to play</button>
+      <div className="home-actions">
+        <button className="secondary" onClick={onPractice}>🎯 Practice</button>
+        <button className="secondary" onClick={() => setRules(true)}>📖 How to play</button>
+      </div>
+      {installer.kind === "prompt" && <button className="secondary" onClick={installer.install}>📲 Install the app</button>}
+      {installer.kind === "ios" && <p className="hint center">Install on iPhone: tap Share, then “Add to Home Screen”.</p>}
       {rules && <HowToPlay onClose={() => setRules(false)} />}
       <Footer />
     </main>
