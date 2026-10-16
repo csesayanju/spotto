@@ -42,7 +42,7 @@ export async function submitTap(code: string, symbol: SymbolId, round: number, t
     const rules = MODES[room.game.mode];
     const out = rules.resolveTap({
       deck: DECK, game: room.game, players: room.players, playerId: uid,
-      symbol, target, round, now: serverNow(), penaltyMs: CONFIG.penaltyMs,
+      symbol, target, round, now: serverNow(), penaltyMs: room.meta.penaltyMs ?? CONFIG.penaltyMs,
     });
     result = out.result;
     if (out.result.kind === "stale" || out.result.kind === "frozen") return; // abort, no write
@@ -91,3 +91,8 @@ export async function setMatch(code: string, match: MatchLength): Promise<void> 
 
 /** Host only, mid-match: deal the next game straight away with the same players and settings. */
 export const nextGame = startGame;
+
+/** Host only, in the lobby: how long a wrong tap freezes a player. */
+export async function setPenalty(code: string, penaltyMs: number): Promise<void> {
+  await update(ref(db, `rooms/${code}/meta`), { penaltyMs });
+}

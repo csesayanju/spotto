@@ -11,6 +11,7 @@ import { ReactionBar } from "../components/Reactions";
 import { SymbolCard } from "../components/SymbolCard";
 import { buzzWin, buzzWrong } from "../feedback";
 import { MODE_INFO } from "../modes";
+import { BigSymbolsToggle } from "../prefs";
 import { play, SoundToggle } from "../sound";
 
 interface Props { code: string; room: Room; uid: string; onLeave: () => void }
@@ -79,12 +80,13 @@ export function Game({ code, room, uid, onLeave }: Props) {
           </span>
         ))}
         <SoundToggle />
+        <BigSymbolsToggle />
       </header>
       {game.mode === "potato"
         ? <Opponents room={room} uid={uid} frozen={frozen} onTap={tap} />
         : <SymbolCard key={centerIdx} className="pop" label="Center card" card={DECK[centerIdx]} seed={centerIdx + 1} disabled />}
       <div className={banner ? "banner show" : "banner"} aria-live="polite">
-        {frozen ? <FrozenBar left={frozenLeft} />
+        {frozen ? <FrozenBar left={frozenLeft} total={room.meta.penaltyMs} />
           : banner ? <Replay {...banner} />
           : status}
       </div>
@@ -132,11 +134,11 @@ export function Opponents({ room, uid, frozen, onTap }: {
 }
 
 /** Shrinking bar shown while you're frozen after a wrong tap. */
-export function FrozenBar({ left }: { left: number }) {
+export function FrozenBar({ left, total = CONFIG.penaltyMs }: { left: number; total?: number }) {
   return (
     <span className="frozen-bar" role="status">
       Wrong symbol, frozen {(left / 1000).toFixed(1)}s
-      <span style={{ transform: `scaleX(${left / CONFIG.penaltyMs})` }} />
+      <span style={{ transform: `scaleX(${Math.min(1, left / total)})` }} />
     </span>
   );
 }

@@ -121,6 +121,15 @@ button.icon.sound { font-size: 1.25rem; padding: 4px 8px; }
 .home-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .home-actions button { padding-inline: 8px; }
 
+.lead.center { text-align: center; margin: 0; }
+.closed .trophy { text-align: center; }
+.device-toggles { position: absolute; top: 6px; right: 6px; display: flex; gap: 2px; }
+.code-box .device-toggles .sound { position: static; }
+button.big-toggle { font-size: 1rem; font-weight: 800; padding: 4px 8px; opacity: .6; }
+button.big-toggle.on { opacity: 1; color: var(--sun); }
+button.icon.kick { font-size: .9rem; padding: 2px 6px; opacity: .55; }
+button.icon.kick.small { font-size: .75rem; padding: 0 4px; }
+
 /* ============ practice ============ */
 .practice-bar { display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 8px; }
 .clock { font-size: 2rem; font-weight: 800; color: var(--sun); font-variant-numeric: tabular-nums; }

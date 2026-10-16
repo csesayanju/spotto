@@ -5,6 +5,7 @@ import { Avatar, colorFor } from "../components/Avatar";
 import { ReactionBar } from "../components/Reactions";
 import { SymbolCard } from "../components/SymbolCard";
 import { MODE_INFO } from "../modes";
+import { BigSymbolsToggle } from "../prefs";
 import { SoundToggle } from "../sound";
 import { Opponents, Replay, useRoundBanner } from "./Game";
 
@@ -30,7 +31,7 @@ function WatchGame({ code, room, uid, onLeave }: Props) {
 
   return (
     <main className={`screen game watch ${game.mode}${startLeft > 0 ? " waiting" : ""}`}>
-      <p className="watch-tag">👀 Watching {info.icon} {info.name} <SoundToggle /></p>
+      <p className="watch-tag">👀 Watching {info.icon} {info.name} <SoundToggle /><BigSymbolsToggle /></p>
       <p className="hint center watch-hint">You'll join the players in the next game.</p>
       <header className="scores">
         {Object.entries(room.players).map(([id, p]) => (
@@ -83,13 +84,23 @@ function WatchLobby({ code, room, uid, onLeave }: Props) {
   );
 }
 
-/** Small "Watching: Ana, Ben" line, shown wherever spectators are present. */
-export function Spectators({ room, uid }: { room: Room; uid: string }) {
+/** "Watching: Ana, Ben" line, shown wherever spectators are present. The host can remove them. */
+export function Spectators({ room, uid, onKick }: {
+  room: Room; uid: string; onKick?: (id: string, name: string) => void;
+}) {
   const list = Object.entries(room.spectators ?? {});
   if (!list.length) return null;
   return (
     <p className="spectators">
-      👀 Watching: {list.map(([id, s]) => (id === uid ? "you" : s.name)).join(", ")}
+      👀 Watching:{" "}
+      {list.map(([id, s], i) => (
+        <span key={id}>
+          {i > 0 && ", "}{id === uid ? "you" : s.name}
+          {onKick && id !== uid && (
+            <button className="icon kick small" onClick={() => onKick(id, s.name)} aria-label={`Remove ${s.name}`}>✕</button>
+          )}
+        </span>
+      ))}
     </p>
   );
 }

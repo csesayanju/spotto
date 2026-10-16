@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.0
+
+- Host settings in the lobby: wrong-tap penalty of 1s (gentle), 1.5s or 3s (tough)
+- Host can remove a player or spectator (with a confirmation); the removed player is told why they're back home
+- Big symbols: an "Aa" button switches this phone to larger, nearly upright symbols. Remembered per device
+- Open/closed switch: set `config/open` to `false` in the Firebase console to close Spotto. New rooms and joins are blocked (also by the database rules), games in progress finish, and Practice still works
+
 ## 0.5.0
 
 - Reactions: tap 😂 🔥 😮 😤 👏 in the lobby, during games and on the results screen; they float up on everyone's screen with your name

@@ -2,6 +2,8 @@
 export const CONFIG = {
   order: 7,
   penaltyMs: 1500,
+  /** Penalty choices the host can pick in the lobby. */
+  penaltyChoices: [1000, 1500, 3000],
   /** 3-2-1 countdown before the first round. */
   countdownMs: 3000,
   /** Matches in a solo practice run. */

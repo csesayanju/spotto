@@ -6,7 +6,7 @@
         "meta/createdAt"
       ],
       "$code": {
-        ".write": "auth != null && (!data.exists() || data.child('players').child(auth.uid).exists() || (!newData.exists() && data.child('meta/createdAt').val() < now - 21600000))",
+        ".write": "auth != null && ((!data.exists() && root.child('config/open').val() !== false) || data.child('players').child(auth.uid).exists() || (!newData.exists() && data.child('meta/createdAt').val() < now - 21600000))",
         ".validate": "$code.matches(/^[A-Z]{4}$/) && newData.hasChildren(['meta'])",
         "meta": {
           ".validate": "newData.hasChildren(['hostId', 'status', 'mode', 'createdAt'])",
@@ -22,7 +22,7 @@
         },
         "players": {
           "$uid": {
-            ".write": "auth != null && auth.uid === $uid && (data.exists() || !newData.exists() || (root.child('rooms').child($code).child('meta/status').val() === 'lobby'))",
+            ".write": "auth != null && auth.uid === $uid && (data.exists() || !newData.exists() || (root.child('config/open').val() !== false && root.child('rooms').child($code).child('meta/status').val() === 'lobby'))",
             ".validate": "newData.hasChildren(['name'])",
             "name": {
               ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 16"
@@ -40,7 +40,7 @@
         },
         "spectators": {
           "$uid": {
-            ".write": "auth != null && auth.uid === $uid && (data.exists() || !newData.exists() || root.child('rooms').child($code).child('meta').exists())",
+            ".write": "auth != null && auth.uid === $uid && (data.exists() || !newData.exists() || (root.child('config/open').val() !== false && root.child('rooms').child($code).child('meta').exists()))",
             ".validate": "newData.hasChildren(['name'])",
             "name": {
               ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 16"
@@ -57,6 +57,10 @@
           }
         }
       }
+    },
+    "config": {
+      ".read": "auth != null",
+      ".write": false
     }
   }
 }
