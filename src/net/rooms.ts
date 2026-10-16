@@ -3,7 +3,10 @@ import {
 } from "firebase/database";
 import { pickNewHost } from "../engine/host";
 import { CONFIG } from "../shared/config";
-import type { PlayerState, Room, RoomMeta } from "../shared/types";
+import { matchChampions } from "../engine/match";
+import { spectatorsToPromote } from "../engine/roster";
+import type { PlayerId, PlayerState, Room, RoomMeta } from "../shared/types";
+import { serverNow } from "./status";
 import { db, ensureSignedIn } from "./firebase";
 import { cancelPresence } from "./presence";
 
@@ -17,6 +20,27 @@ function randomCode(): string {
 
 function newPlayer(name: string): PlayerState {
   return { name, ready: false, connected: true, topCard: -1, score: 0, frozenUntil: 0 };
+}
+
+/** Whether this device is playing or watching in a room. */
+export type Role = "players" | "spectators";
+
+export function roleIn(room: Room | null, uid: string | null): Role | null {
+  if (!room || !uid) return null;
+  if (room.players?.[uid]) return "players";
+  if (room.spectators?.[uid]) return "spectators";
+  return null;
+}
+
+/** Database patch moving spectators into the player list while there's room, for the next game. */
+function promoteSpectators(room: Room, players: Record<PlayerId, PlayerState>): Record<string, unknown> {
+  const patch: Record<string, unknown> = {};
+  for (const id of spectatorsToPromote(Object.keys(players).length, room.spectators, CONFIG.maxPlayers)) {
+    const s = room.spectators![id];
+    patch[`players/${id}`] = { ...newPlayer(s.name), connected: s.connected };
+    patch[`spectators/${id}`] = null;
+  }
+  return patch;
 }
 
 /* ---------- remembered room (rejoin after reload) ---------- */
@@ -34,8 +58,10 @@ export async function restoreRoom(): Promise<string | null> {
   try { code = localStorage.getItem(SAVED_ROOM_KEY); } catch { return null; }
   if (!code) return null;
   const uid = await ensureSignedIn();
-  const snap = await get(ref(db, `rooms/${code}/players/${uid}`));
-  if (snap.exists()) return code;
+  const [asPlayer, asSpectator] = await Promise.all([
+    get(ref(db, `rooms/${code}/players/${uid}`)), get(ref(db, `rooms/${code}/spectators/${uid}`)),
+  ]);
+  if (asPlayer.exists() || asSpectator.exists()) return code;
   saveRoomCode(null);
   return null;
 }
@@ -98,28 +124,44 @@ export async function joinRoom(code: string, name: string): Promise<void> {
   if (!room) throw new Error("No room with that code. Check the letters and try again.");
 
   const players = room.players ?? {};
-  if (players[uid]) {
+  const role = roleIn(room, uid);
+  if (role) {
     // Already in this room (e.g. rejoining): keep score and cards.
-    await update(ref(db, `rooms/${code}/players/${uid}`), { name, connected: true });
+    await update(ref(db, `rooms/${code}/${role}/${uid}`), { name, connected: true });
     return;
   }
-  if (room.meta.status !== "lobby") throw new Error("That game has already started. Wait for the next round.");
-  if (Object.keys(players).length >= CONFIG.maxPlayers) throw new Error(`That room is full (${CONFIG.maxPlayers} players max).`);
-  await set(ref(db, `rooms/${code}/players/${uid}`), newPlayer(name));
+  if (room.meta.status === "lobby" && Object.keys(players).length < CONFIG.maxPlayers) {
+    await set(ref(db, `rooms/${code}/players/${uid}`), newPlayer(name));
+    return;
+  }
+  // Game in progress or room full: watch, and join the players at the next lobby.
+  if (Object.keys(room.spectators ?? {}).length >= CONFIG.maxSpectators) throw new Error("That room is full right now. Try again later.");
+  await set(ref(db, `rooms/${code}/spectators/${uid}`), { name, connected: true });
 }
 
-/** Removes this player. Hands host to someone else, or deletes the room if it's now empty. */
-export async function leaveRoom(code: string): Promise<void> {
+/**
+ * Removes this player or spectator. Hands host to someone else; if the last
+ * player leaves, any spectators take over in a fresh lobby, otherwise the room is deleted.
+ */
+export async function leaveRoom(code: string, role: Role = "players"): Promise<void> {
   const uid = await ensureSignedIn();
   saveRoomCode(null);
-  await cancelPresence(code).catch(() => undefined);
+  await cancelPresence(code, role).catch(() => undefined);
+  if (role === "spectators") {
+    await remove(ref(db, `rooms/${code}/spectators/${uid}`));
+    return;
+  }
   await runTransaction(ref(db, `rooms/${code}`), (room: Room | null) => {
     if (!room?.players?.[uid]) return room;
     const { [uid]: _gone, ...rest } = room.players;
-    const ids = Object.keys(rest);
-    if (ids.length === 0) return null; // last one out deletes the room
-    const hostId = room.meta.hostId === uid ? pickNewHost(rest) : room.meta.hostId;
-    return { ...room, players: rest, meta: { ...room.meta, hostId } };
+    if (Object.keys(rest).length > 0) {
+      const hostId = room.meta.hostId === uid ? pickNewHost(rest) : room.meta.hostId;
+      return { ...room, players: rest, meta: { ...room.meta, hostId } };
+    }
+    const watchers = Object.entries(room.spectators ?? {});
+    if (!watchers.length) return null; // last one out deletes the room
+    const players = Object.fromEntries(watchers.map(([id, s]) => [id, { ...newPlayer(s.name), connected: s.connected }]));
+    return { meta: { ...room.meta, status: "lobby", hostId: pickNewHost(players), matchWins: null }, players };
   });
 }
 
@@ -138,9 +180,13 @@ export async function setReady(code: string, ready: boolean): Promise<void> {
   await update(ref(db, `rooms/${code}/players/${uid}`), { ready });
 }
 
-/** Host only: send everyone back to the lobby with scores reset. */
+/**
+ * Host only: send everyone back to the lobby with scores reset. Spectators join
+ * the players, and a finished match starts over.
+ */
 export async function resetToLobby(code: string, room: Room): Promise<void> {
-  const patch: Record<string, unknown> = { game: null, "meta/status": "lobby" };
+  const patch: Record<string, unknown> = { game: null, "meta/status": "lobby", ...promoteSpectators(room, room.players) };
+  if (matchChampions(room.meta.matchWins, room.meta.match).length) patch["meta/matchWins"] = null;
   for (const id of Object.keys(room.players)) {
     Object.assign(patch, {
       [`players/${id}/ready`]: false, [`players/${id}/score`]: 0,
@@ -148,6 +194,12 @@ export async function resetToLobby(code: string, room: Room): Promise<void> {
     });
   }
   await update(ref(db, `rooms/${code}`), patch);
+}
+
+/** Shows an emoji over everyone's screen. */
+export async function sendReaction(code: string, role: Role, emoji: string): Promise<void> {
+  const uid = await ensureSignedIn();
+  await update(ref(db, `rooms/${code}/${role}/${uid}`), { reaction: { emoji, at: serverNow() } });
 }
 
 export function subscribeRoom(code: string, cb: (room: Room | null) => void): () => void {

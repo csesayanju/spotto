@@ -7,6 +7,7 @@ import { CONFIG } from "../../shared/config";
 import type { PlayerId, Room, SymbolId } from "../../shared/types";
 import { colorFor } from "../components/Avatar";
 import { ConfirmSheet } from "../components/ConfirmSheet";
+import { ReactionBar } from "../components/Reactions";
 import { SymbolCard } from "../components/SymbolCard";
 import { buzzWin, buzzWrong } from "../feedback";
 import { MODE_INFO } from "../modes";
@@ -88,7 +89,10 @@ export function Game({ code, room, uid, onLeave }: Props) {
           : status}
       </div>
       {game.mode === "gift" ? <Opponents room={room} uid={uid} frozen={frozen} onTap={tap} /> : myCard}
-      <button className="link" onClick={() => setConfirmLeave(true)}>Leave game</button>
+      <footer className="game-foot">
+        <ReactionBar code={code} role="players" />
+        <button className="link" onClick={() => setConfirmLeave(true)}>Leave</button>
+      </footer>
       {(waiting || go) && (
         <div className="countdown" aria-live="assertive">
           <span key={waiting ? secondsLeft : "go"}>{waiting ? secondsLeft : "Go!"}</span>
@@ -104,8 +108,8 @@ export function Game({ code, room, uid, onLeave }: Props) {
 }
 
 /** Gift and Hot Potato: everyone else's top card. Tap the match on someone's card to send them a card. */
-function Opponents({ room, uid, frozen, onTap }: {
-  room: Room; uid: string; frozen: boolean; onTap: (symbol: SymbolId, target: PlayerId) => void;
+export function Opponents({ room, uid, frozen, onTap }: {
+  room: Room; uid: string; frozen: boolean; onTap?: (symbol: SymbolId, target: PlayerId) => void;
 }) {
   const game = room.game!;
   const others = Object.entries(room.players).filter(([id]) => id !== uid);
@@ -117,7 +121,7 @@ function Opponents({ room, uid, frozen, onTap }: {
           <figure key={id} className={id === game.lastTarget ? "opponent got" : "opponent"}>
             {p.topCard >= 0
               ? <SymbolCard key={idx} className="pop" label={`${p.name}'s card`} card={DECK[idx]} seed={idx + 2000}
-                  onTap={(s) => onTap(s, id)} disabled={frozen} />
+                  onTap={onTap && ((s) => onTap(s, id))} disabled={frozen || !onTap} />
               : <div className="card empty" aria-label={`${p.name} has no cards`} />}
             <figcaption>{p.name}{game.mode === "potato" && <small> · {p.score}</small>}</figcaption>
           </figure>
@@ -164,10 +168,10 @@ export function Stack({ cards }: { cards: number }) {
   );
 }
 
-interface Banner { text: string; pair: [number, number] | null; match: SymbolId }
+export interface Banner { text: string; pair: [number, number] | null; match: SymbolId }
 
 /** Last round's two cards side by side, with the shared symbol ringed. */
-function Replay({ text, pair, match }: Banner) {
+export function Replay({ text, pair, match }: Banner) {
   return (
     <span className="replay">
       {pair && (
@@ -182,7 +186,7 @@ function Replay({ text, pair, match }: Banner) {
 }
 
 /** Who won the last round, with which symbol, shown for a moment. Also plays the round sound. */
-function useRoundBanner(room: Room, uid: string): Banner | null {
+export function useRoundBanner(room: Room, uid: string): Banner | null {
   const game = room.game!;
   const [banner, setBanner] = useState<Banner | null>(null);
   const lastRound = useRef(game.round);

@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
-import { setLength, setMode, startGame } from "../../net/game";
+import { setLength, setMatch, setMode, startGame } from "../../net/game";
 import { claimHostIfNeeded, roomLink, setReady } from "../../net/rooms";
 import { CONFIG } from "../../shared/config";
-import type { GameLength, Room } from "../../shared/types";
+import type { GameLength, MatchLength, Room } from "../../shared/types";
 import { Avatar } from "../components/Avatar";
 import { HowToPlay } from "../components/HowToPlay";
-import { LENGTH_INFO, MODE_INFO, MODE_ORDER } from "../modes";
+import { ReactionBar } from "../components/Reactions";
+import { LENGTH_INFO, MATCH_INFO, MODE_INFO, MODE_ORDER } from "../modes";
 import { SoundToggle } from "../sound";
+import { Spectators } from "./Watch";
 
 interface Props { code: string; room: Room; uid: string; onLeave: () => void }
 
@@ -20,6 +22,9 @@ export function Lobby({ code, room, uid, onLeave }: Props) {
   const [shared, setShared] = useState(false);
   const readyCount = players.filter(([, p]) => p.ready).length;
   const length = room.meta.length ?? "full";
+  const match = room.meta.match ?? "single";
+  const matchWins = room.meta.matchWins ?? {};
+  const midMatch = match !== "single" && Object.keys(matchWins).length > 0;
   const wins = room.meta.wins ?? {};
 
   // If the host drops, someone else takes over so the game can still start.
@@ -66,6 +71,19 @@ export function Lobby({ code, room, uid, onLeave }: Props) {
           </button>
         ))}
       </div>
+      <div className="lengths" role="radiogroup" aria-label="Match length">
+        {(Object.keys(MATCH_INFO) as MatchLength[]).map((m) => (
+          <button key={m} role="radio" aria-checked={m === match} className={m === match ? "on" : ""}
+            disabled={!isHost} onClick={() => setMatch(code, m)}>
+            {MATCH_INFO[m].name}<small>{MATCH_INFO[m].hint}</small>
+          </button>
+        ))}
+      </div>
+      {midMatch && (
+        <p className="hint center">
+          Match so far: {players.filter(([id]) => matchWins[id]).map(([id, p]) => `${p.name} ${matchWins[id]}`).join(" · ")}
+        </p>
+      )}
 
       <h2 className="section-title">
         Players <span>{players.length}/{CONFIG.maxPlayers} · {readyCount} ready</span>
@@ -84,6 +102,8 @@ export function Lobby({ code, room, uid, onLeave }: Props) {
           </li>
         ))}
       </ul>
+      <Spectators room={room} uid={uid} />
+      <ReactionBar code={code} role="players" />
       <button className={me.ready ? "" : "ready-btn"} onClick={() => setReady(code, !me.ready)}>
         {me.ready ? "Not ready" : "I'm ready"}
       </button>

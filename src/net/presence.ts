@@ -1,8 +1,9 @@
 import { onDisconnect, onValue, ref, set } from "firebase/database";
 import { db, ensureSignedIn } from "./firebase";
+import type { Role } from "./rooms";
 
-function connectedRef(code: string, uid: string) {
-  return ref(db, `rooms/${code}/players/${uid}/connected`);
+function connectedRef(code: string, uid: string, role: Role) {
+  return ref(db, `rooms/${code}/${role}/${uid}/connected`);
 }
 
 /**
@@ -10,9 +11,9 @@ function connectedRef(code: string, uid: string) {
  * socket drops. The returned stop function also cancels that server-side
  * hook, so a player who left doesn't reappear as an offline ghost.
  */
-export async function trackPresence(code: string): Promise<() => void> {
+export async function trackPresence(code: string, role: Role): Promise<() => void> {
   const uid = await ensureSignedIn();
-  const target = connectedRef(code, uid);
+  const target = connectedRef(code, uid, role);
   const unsub = onValue(ref(db, ".info/connected"), async (snap) => {
     if (snap.val() !== true) return;
     await onDisconnect(target).set(false);
@@ -24,7 +25,7 @@ export async function trackPresence(code: string): Promise<() => void> {
   };
 }
 
-export async function cancelPresence(code: string): Promise<void> {
+export async function cancelPresence(code: string, role: Role): Promise<void> {
   const uid = await ensureSignedIn();
-  await onDisconnect(connectedRef(code, uid)).cancel();
+  await onDisconnect(connectedRef(code, uid, role)).cancel();
 }

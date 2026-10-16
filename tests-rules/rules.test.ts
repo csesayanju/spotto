@@ -116,3 +116,35 @@ describe("cleanup", () => {
     await assertSucceeds(db("host").ref("rooms/ABCD").remove());
   });
 });
+
+describe("spectators and reactions", () => {
+  it("anyone can watch a game in progress, but only as themselves", async () => {
+    await seed("ABCD", room("playing"));
+    await assertSucceeds(db("fan").ref("rooms/ABCD/spectators/fan").set({ name: "Fan", connected: true }));
+    await assertFails(db("fan").ref("rooms/ABCD/spectators/other").set({ name: "Other", connected: true }));
+  });
+
+  it("spectators can't change the game", async () => {
+    await seed("ABCD", { ...room("playing"), spectators: { fan: { name: "Fan", connected: true } } });
+    await assertFails(db("fan").ref("rooms/ABCD/meta/status").set("finished"));
+    await assertSucceeds(db("fan").ref("rooms/ABCD/spectators/fan/reaction").set({ emoji: "🔥", at: Date.now() }));
+    await assertSucceeds(db("fan").ref("rooms/ABCD/spectators/fan").remove());
+  });
+
+  it("can't watch a room that doesn't exist", async () => {
+    await assertFails(db("fan").ref("rooms/ZZZZ/spectators/fan").set({ name: "Fan", connected: true }));
+  });
+
+  it("the host can move spectators into the game", async () => {
+    await seed("ABCD", { ...room("finished"), spectators: { fan: { name: "Fan", connected: true } } });
+    await assertSucceeds(db("host").ref("rooms/ABCD").update({
+      "players/fan": player("Fan"), "spectators/fan": null, "meta/status": "lobby",
+    }));
+  });
+
+  it("reactions must look like reactions", async () => {
+    await seed("ABCD", room());
+    await assertSucceeds(db("host").ref("rooms/ABCD/players/host/reaction").set({ emoji: "😂", at: Date.now() }));
+    await assertFails(db("host").ref("rooms/ABCD/players/host/reaction").set({ emoji: "x".repeat(40), at: 1 }));
+  });
+});
