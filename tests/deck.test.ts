@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { generateDeck, validateDeck } from "../src/shared/deck";
-import { SYMBOLS } from "../src/assets/symbols";
+import { SYMBOLS, THEMES } from "../src/assets/symbols";
 
 describe("deck generator", () => {
   const deck = generateDeck(7);
@@ -13,5 +13,11 @@ describe("deck generator", () => {
     const max = Math.max(...deck.flat());
     expect(SYMBOLS.length).toBeGreaterThan(max);
     expect(new Set(SYMBOLS).size).toBe(SYMBOLS.length);
+  });
+  it("every theme has 57 distinct emoji", () => {
+    for (const set of Object.values(THEMES)) {
+      expect(set).toHaveLength(57);
+      expect(new Set(set).size).toBe(57);
+    }
   });
 });

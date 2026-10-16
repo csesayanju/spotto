@@ -6,6 +6,7 @@ export type GameMode = "tower" | "well" | "gift" | "potato";
 export type RoomStatus = "lobby" | "playing" | "finished";
 export type GameLength = "quick" | "normal" | "full";
 export type MatchLength = "single" | "bo3" | "bo5";
+export type SymbolTheme = "classic" | "animals" | "food";
 
 export interface PlayerState {
   name: string;
@@ -60,6 +61,8 @@ export interface RoomMeta {
   matchWins?: Record<PlayerId, number>;
   /** How long a wrong tap freezes a player, in ms. Missing means CONFIG.penaltyMs. */
   penaltyMs?: number;
+  /** Which emoji set the cards use. Missing means "classic". */
+  theme?: SymbolTheme;
   createdAt: number;
 }
 

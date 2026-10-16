@@ -1,8 +1,8 @@
 import { useMemo } from "react";
-import { SYMBOLS } from "../../assets/symbols";
 import { mulberry32 } from "../../shared/random";
 import type { Card, SymbolId } from "../../shared/types";
 import { useBigSymbols } from "../prefs";
+import { useSymbols } from "../theme";
 
 interface Props {
   card: Card;
@@ -19,6 +19,7 @@ interface Props {
 /** Card Renderer: one symbol in the middle, the rest on a ring, random size and rotation. */
 export function SymbolCard({ card, seed, onTap, disabled, label, highlight, className }: Props) {
   const big = useBigSymbols();
+  const symbols = useSymbols();
   const layout = useMemo(() => buildLayout(card, seed, big), [card, seed, big]);
   return (
     <div className={className ? `card ${className}` : "card"} role="group" aria-label={label}>
@@ -31,7 +32,7 @@ export function SymbolCard({ card, seed, onTap, disabled, label, highlight, clas
           style={{ left: `${x}%`, top: `${y}%`, fontSize: `${size}cqw`, transform: `translate(-50%,-50%) rotate(${rot}deg)` }}
           aria-label={`Symbol ${symbol}`}
         >
-          {SYMBOLS[symbol]}
+          {symbols[symbol]}
         </button>
       ))}
     </div>

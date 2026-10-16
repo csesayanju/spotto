@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { SYMBOLS } from "../../assets/symbols";
 import { DECK } from "../../net/game";
 import { sharedSymbol } from "../../shared/deck";
 import type { GameMode } from "../../shared/types";
 import { BASICS, MODE_INFO, MODE_ORDER } from "../modes";
+import { useSymbols } from "../theme";
 import { Footer } from "./Footer";
 import { SymbolCard } from "./SymbolCard";
 
@@ -65,6 +65,7 @@ export function HowToPlay({ initial = "basics", onClose }: Props) {
 }
 
 function Basics() {
+  const symbols = useSymbols();
   return (
     <>
       <p className="lead">Two cards, one shared symbol. Spot it faster than your friends.</p>
@@ -72,7 +73,7 @@ function Basics() {
         <SymbolCard label="Example card" card={EXAMPLE[0]} seed={7} highlight={EXAMPLE_MATCH} disabled />
         <SymbolCard label="Example card" card={EXAMPLE[1]} seed={11} highlight={EXAMPLE_MATCH} disabled />
       </div>
-      <p className="caption">These two cards share {SYMBOLS[EXAMPLE_MATCH]}. It's the only symbol on both.</p>
+      <p className="caption">These two cards share {symbols[EXAMPLE_MATCH]}. It's the only symbol on both.</p>
       <ol className="rules">{BASICS.map((r) => <li key={r}>{r}</li>)}</ol>
     </>
   );

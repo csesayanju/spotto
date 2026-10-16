@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dailyRandom, dayKey, msUntilNextDay, ranking } from "../src/engine/daily";
+import { currentStreak, dailyRandom, dayKey, msUntilNextDay, nextStreak, previousDay, ranking } from "../src/engine/daily";
 import { tower } from "../src/engine/modes/tower";
 
 const deal = (day: string) => tower.setup(["me"], 57, dailyRandom(day), 16).game.deckOrder;
@@ -25,5 +25,24 @@ describe("daily challenge", () => {
       d: { name: "D", startedAt: 1, ms: 9000 },
     });
     expect(r.map(([id]) => id)).toEqual(["c", "d", "a"]);
+  });
+});
+
+describe("daily streaks", () => {
+  it("knows yesterday, across months and years", () => {
+    expect(previousDay("2026-11-01")).toBe("2026-10-31");
+    expect(previousDay("2027-01-01")).toBe("2026-12-31");
+  });
+
+  it("grows on consecutive days and restarts after a gap", () => {
+    expect(nextStreak(undefined, 0, "2026-10-16")).toBe(1);
+    expect(nextStreak("2026-10-15", 4, "2026-10-16")).toBe(5);
+    expect(nextStreak("2026-10-16", 5, "2026-10-16")).toBe(5);
+    expect(nextStreak("2026-10-13", 9, "2026-10-16")).toBe(1);
+  });
+
+  it("shows the streak until a full day is missed", () => {
+    expect(currentStreak("2026-10-15", 3, "2026-10-16")).toBe(3);
+    expect(currentStreak("2026-10-14", 3, "2026-10-16")).toBe(0);
   });
 });

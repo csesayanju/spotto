@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.8.0
+
+Fun
+- Symbol themes: the host picks Classic, Animals or Food for the room's cards
+- Stats page (📊 on the home screen): games played and won per mode, best Practice time, Daily runs, best and longest streak. Kept on your phone
+- Daily streaks 🔥: play the official run on consecutive days to build a streak, shown on the Daily screen and in Stats
+
+Robustness
+- Players who drop out are greyed out in Gift and Potato and can't be sent cards (tapping them costs nothing)
+- The host role passes to the next connected player during games and on the results screen too, not just in the lobby
+- Reloading mid-game puts you straight back on your own cards (checked)
+- Faster loading: the game code is 60 KB, with React and Firebase in separate files that stay cached between releases; Daily, Practice and Stats load on demand
+- Project notes for future work are now in the repo (CLAUDE.md)
+
 ## 0.7.0
 
 - Daily challenge (📅 on the home screen): the same 15 matches for everyone each day, new one at midnight UTC (5:30 am in India)

@@ -28,6 +28,7 @@ export const gift: ModeRules = {
     if (early) return early;
 
     const them = target ? players[target] : undefined;
+    if (them && !them.connected) return { result: { kind: "stale" }, game, players }; // they dropped out
     if (!them || target === playerId) return penalize(input);
     const theirCard = deck[game.deckOrder[them.topCard]];
     const center = deck[game.deckOrder[game.centerPos]];

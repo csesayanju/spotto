@@ -1,13 +1,13 @@
-import { useEffect, useState } from "react";
-import { setLength, setMatch, setMode, setPenalty, startGame } from "../../net/game";
-import { claimHostIfNeeded, kick, roomLink, setReady } from "../../net/rooms";
+import { useState } from "react";
+import { setLength, setMatch, setMode, setPenalty, setTheme, startGame } from "../../net/game";
+import { kick, roomLink, setReady } from "../../net/rooms";
 import { CONFIG } from "../../shared/config";
-import type { GameLength, MatchLength, Room } from "../../shared/types";
+import type { GameLength, MatchLength, Room, SymbolTheme } from "../../shared/types";
 import { Avatar } from "../components/Avatar";
 import { ConfirmSheet } from "../components/ConfirmSheet";
 import { HowToPlay } from "../components/HowToPlay";
 import { ReactionBar } from "../components/Reactions";
-import { LENGTH_INFO, MATCH_INFO, MODE_INFO, MODE_ORDER } from "../modes";
+import { LENGTH_INFO, MATCH_INFO, MODE_INFO, MODE_ORDER, THEME_INFO } from "../modes";
 import { BigSymbolsToggle } from "../prefs";
 import { SoundToggle } from "../sound";
 import { Spectators } from "./Watch";
@@ -28,11 +28,10 @@ export function Lobby({ code, room, uid, onLeave }: Props) {
   const matchWins = room.meta.matchWins ?? {};
   const midMatch = match !== "single" && Object.keys(matchWins).length > 0;
   const penalty = room.meta.penaltyMs ?? CONFIG.penaltyMs;
+  const theme = room.meta.theme ?? "classic";
   const [kicking, setKicking] = useState<{ id: string; name: string } | null>(null);
   const wins = room.meta.wins ?? {};
 
-  // If the host drops, someone else takes over so the game can still start.
-  useEffect(() => { claimHostIfNeeded(code, room, uid).catch(() => undefined); }, [code, room, uid]);
 
   async function share() {
     const text = `Join my Spotto game! Room code: ${code}`;
@@ -80,6 +79,14 @@ export function Lobby({ code, room, uid, onLeave }: Props) {
           <button key={m} role="radio" aria-checked={m === match} className={m === match ? "on" : ""}
             disabled={!isHost} onClick={() => setMatch(code, m)}>
             {MATCH_INFO[m].name}<small>{MATCH_INFO[m].hint}</small>
+          </button>
+        ))}
+      </div>
+      <div className="lengths" role="radiogroup" aria-label="Symbols">
+        {(Object.keys(THEME_INFO) as SymbolTheme[]).map((t) => (
+          <button key={t} role="radio" aria-checked={t === theme} className={t === theme ? "on" : ""}
+            disabled={!isHost} onClick={() => setTheme(code, t)}>
+            {THEME_INFO[t].icon} {THEME_INFO[t].name}<small>symbols</small>
           </button>
         ))}
       </div>

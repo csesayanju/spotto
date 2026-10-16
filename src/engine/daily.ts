@@ -29,3 +29,21 @@ export function ranking(entries: Record<string, DailyEntry> = {}): [string, Dail
     .filter((e): e is [string, DailyEntry & { ms: number }] => typeof e[1].ms === "number")
     .sort(([, a], [, b]) => a.ms - b.ms || a.startedAt - b.startedAt);
 }
+
+/** The day before, as a day key. */
+export function previousDay(day: string): string {
+  const d = new Date(`${day}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() - 1);
+  return d.toISOString().slice(0, 10);
+}
+
+/** Streak after finishing an official run on `day`: +1 if yesterday was played, same if today already counted, else 1. */
+export function nextStreak(lastDay: string | undefined, streak: number, day: string): number {
+  if (lastDay === day) return streak;
+  return lastDay === previousDay(day) ? streak + 1 : 1;
+}
+
+/** Streak to show today: it survives until the end of the day after the last run. */
+export function currentStreak(lastDay: string | undefined, streak: number, today: string): number {
+  return lastDay === today || lastDay === previousDay(today) ? streak : 0;
+}

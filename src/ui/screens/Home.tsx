@@ -14,13 +14,14 @@ interface Props {
   onEnter: (code: string) => void;
   onPractice: () => void;
   onDaily: () => void;
+  onStats: () => void;
   /** Room code from an invite link. */
   invite?: string | null;
   /** Message to show on arrival, e.g. after being removed from a room. */
   notice?: string | null;
 }
 
-export function Home({ onEnter, onPractice, onDaily, invite, notice }: Props) {
+export function Home({ onEnter, onPractice, onDaily, onStats, invite, notice }: Props) {
   const [name, setName] = useState(savedName);
   const [code, setCode] = useState(invite ?? "");
   const [error, setError] = useState<string | null>(null);
@@ -76,7 +77,8 @@ export function Home({ onEnter, onPractice, onDaily, invite, notice }: Props) {
       <div className="home-actions">
         <button className="secondary daily-btn" onClick={onDaily}>📅 Daily challenge</button>
         <button className="secondary" onClick={onPractice}>🎯 Practice</button>
-        <button className="secondary" onClick={() => setRules(true)}>📖 How to play</button>
+        <button className="secondary" onClick={onStats}>📊 Stats</button>
+        <button className="secondary htp-btn" onClick={() => setRules(true)}>📖 How to play</button>
       </div>
       {installer.kind === "prompt" && <button className="secondary" onClick={installer.install}>📲 Install the app</button>}
       {installer.kind === "ios" && <p className="hint center">Install on iPhone: tap Share, then “Add to Home Screen”.</p>}
