@@ -170,3 +170,18 @@ describe("hot potato", () => {
     expect(late.result.kind).toBe("stale");
   });
 });
+
+describe("players who dropped out", () => {
+  it("can't be sent cards in Gift or Potato, and tapping them costs nothing", () => {
+    for (const mode of ["gift", "potato"] as const) {
+      const rules = MODES[mode];
+      const { game, players } = setup(rules, ["a", "b"]);
+      players.b = { ...players.b, connected: false };
+      const other = mode === "gift" ? center(game) : card(game, players.a.topCard);
+      const symbol = sharedSymbol(card(game, players.b.topCard), other)!;
+      const out = rules.resolveTap({ deck, game, players, playerId: "a", symbol, target: "b", round: 0, now: 0, penaltyMs: 1500 });
+      expect(out.result.kind).toBe("stale");
+      expect(out.players.a.frozenUntil).toBe(0);
+    }
+  });
+});

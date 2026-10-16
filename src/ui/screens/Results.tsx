@@ -9,6 +9,7 @@ import { ReactionBar } from "../components/Reactions";
 import { roleIn } from "../../net/rooms";
 import { MATCH_INFO, MODE_INFO } from "../modes";
 import { play } from "../sound";
+import { recordGame } from "../stats";
 
 interface Props { code: string; room: Room; uid: string; onLeave: () => void }
 
@@ -32,7 +33,10 @@ export function Results({ code, room, uid, onLeave }: Props) {
   const matchOver = inMatch && champions.length > 0;
   const name = (id: string) => (id === uid ? "You" : room.players[id]?.name ?? "Someone");
   const role = roleIn(room, uid) ?? "players";
-  useEffect(() => { play(iWon ? "victory" : "defeat"); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    play(iWon ? "victory" : "defeat");
+    if (role === "players" && room.game) recordGame(`${code}:${room.game.startsAt}`, mode, iWon);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const title = winners.length > 1 ? `Tie: ${winners.join(" & ")}`
     : winners[0] === "You" ? "You win!" : `${winners[0]} wins`;

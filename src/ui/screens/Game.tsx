@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { SYMBOLS } from "../../assets/symbols";
+import { THEMES } from "../../assets/symbols";
 import { MODES } from "../../engine";
 import { DECK, endIfExpired, submitTap } from "../../net/game";
 import { serverNow, useCountdown } from "../../net/status";
@@ -120,12 +120,12 @@ export function Opponents({ room, uid, frozen, onTap }: {
       {others.map(([id, p]) => {
         const idx = game.deckOrder[p.topCard];
         return (
-          <figure key={id} className={id === game.lastTarget ? "opponent got" : "opponent"}>
+          <figure key={id} className={["opponent", id === game.lastTarget && "got", !p.connected && "offline"].filter(Boolean).join(" ")}>
             {p.topCard >= 0
               ? <SymbolCard key={idx} className="pop" label={`${p.name}'s card`} card={DECK[idx]} seed={idx + 2000}
-                  onTap={onTap && ((s) => onTap(s, id))} disabled={frozen || !onTap} />
+                  onTap={onTap && ((s) => onTap(s, id))} disabled={frozen || !onTap || !p.connected} />
               : <div className="card empty" aria-label={`${p.name} has no cards`} />}
-            <figcaption>{p.name}{game.mode === "potato" && <small> · {p.score}</small>}</figcaption>
+            <figcaption>{p.name}{game.mode === "potato" && <small> · {p.score}</small>}{!p.connected && <small className="off"> offline</small>}</figcaption>
           </figure>
         );
       })}
@@ -198,7 +198,7 @@ export function useRoundBanner(room: Room, uid: string): Banner | null {
     lastRound.current = game.round;
     if (!game.lastWinner || game.lastMatch == null) return;
     const name = (id: PlayerId, you: string) => (id === uid ? you : room.players[id]?.name ?? "Someone");
-    const symbol = SYMBOLS[game.lastMatch];
+    const symbol = THEMES[room.meta.theme ?? "classic"][game.lastMatch];
     setBanner({
       text: game.mode === "potato" && game.lastTarget
         ? `${name(game.lastWinner, "You")} passed ${name(game.lastTarget, "you")} a card with ${symbol}`
@@ -209,7 +209,7 @@ export function useRoundBanner(room: Room, uid: string): Banner | null {
       match: game.lastMatch,
     });
     play(game.lastWinner === uid ? "win" : "lose");
-  }, [game.round, game.lastWinner, game.lastMatch, game.lastTarget, game.lastPair, game.mode, room.players, uid]);
+  }, [game.round, game.lastWinner, game.lastMatch, game.lastTarget, game.lastPair, game.mode, room.players, room.meta.theme, uid]);
 
   // Its own effect, so other room updates during the 1.6 s don't cancel the timer.
   useEffect(() => {

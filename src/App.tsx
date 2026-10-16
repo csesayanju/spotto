@@ -1,16 +1,20 @@
-import { useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { ensureSignedIn } from "./net/firebase";
 import { trackPresence } from "./net/presence";
-import { leaveRoom, restoreRoom, roleIn, saveRoomCode, takeInviteCode } from "./net/rooms";
+import { claimHostIfNeeded, leaveRoom, restoreRoom, roleIn, saveRoomCode, takeInviteCode } from "./net/rooms";
 import { useOnline, useOpen } from "./net/status";
 import { useRoom } from "./state/store";
 import { ReactionLayer } from "./ui/components/Reactions";
+import { ThemeContext } from "./ui/theme";
+
+// Solo screens load on demand, keeping the first download small.
+const Daily = lazy(() => import("./ui/screens/Daily").then((m) => ({ default: m.Daily })));
+const Practice = lazy(() => import("./ui/screens/Practice").then((m) => ({ default: m.Practice })));
+const StatsScreen = lazy(() => import("./ui/screens/StatsScreen").then((m) => ({ default: m.StatsScreen })));
 import { Game } from "./ui/screens/Game";
 import { Home } from "./ui/screens/Home";
 import { Lobby } from "./ui/screens/Lobby";
 import { Closed } from "./ui/screens/Closed";
-import { Daily } from "./ui/screens/Daily";
-import { Practice } from "./ui/screens/Practice";
 import { Watch } from "./ui/screens/Watch";
 import { Results } from "./ui/screens/Results";
 
@@ -22,6 +26,7 @@ export default function App() {
   const [invite] = useState(takeInviteCode);
   const [practice, setPractice] = useState(false);
   const [daily, setDaily] = useState(false);
+  const [stats, setStats] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const wasIn = useRef(false);
   const { room, loaded } = useRoom(code);
@@ -54,6 +59,11 @@ export default function App() {
     };
   }, [code, role]);
 
+  // If the host drops (lobby, mid-game or on the results screen), the next connected player takes over.
+  useEffect(() => {
+    if (code && room && uid && role === "players") claimHostIfNeeded(code, room, uid).catch(() => undefined);
+  }, [code, room, uid, role]);
+
   // Room deleted, or we were removed from it: go home (and say so if the host removed us).
   useEffect(() => {
     if (role) wasIn.current = true;
@@ -76,7 +86,9 @@ export default function App() {
   return (
     <>
       {!online && <div className="offline-banner" role="status">You're offline. Reconnecting…</div>}
-      {screen()}
+      <ThemeContext.Provider value={(code && room?.meta.theme) || "classic"}>
+        <Suspense fallback={<main className="screen"><p>Loading…</p></main>}>{screen()}</Suspense>
+      </ThemeContext.Provider>
       {code && room && uid && role && <ReactionLayer room={room} uid={uid} />}
     </>
   );
@@ -86,8 +98,9 @@ export default function App() {
     if (!uid || restoring) return <main className="screen"><p>Connecting…</p></main>;
     if (!code && practice) return <Practice onExit={() => setPractice(false)} />;
     if (!code && daily) return <Daily uid={uid} onExit={() => setDaily(false)} />;
+    if (!code && stats) return <StatsScreen onExit={() => setStats(false)} />;
     if (!code && !open) return <Closed onPractice={() => setPractice(true)} />;
-    if (!code) return <Home onEnter={(c) => { setNotice(null); setCode(c); }} onPractice={() => setPractice(true)} onDaily={() => setDaily(true)} invite={invite} notice={notice} />;
+    if (!code) return <Home onEnter={(c) => { setNotice(null); setCode(c); }} onPractice={() => setPractice(true)} onDaily={() => setDaily(true)} onStats={() => setStats(true)} invite={invite} notice={notice} />;
     if (!room || !role) return <main className="screen"><p>Joining room…</p></main>;
     if (role === "spectators" && room.meta.status !== "finished") {
       return <Watch code={code} room={room} uid={uid} onLeave={leave} />;

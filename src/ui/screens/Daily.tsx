@@ -6,6 +6,7 @@ import { CONFIG } from "../../shared/config";
 import { Avatar } from "../components/Avatar";
 import { Footer } from "../components/Footer";
 import { play } from "../sound";
+import { recordDaily, streakToday } from "../stats";
 import { fmt, SoloRun } from "./SoloRun";
 
 const NAME_KEY = "spotto:name";
@@ -45,6 +46,7 @@ export function Daily({ uid, onExit }: { uid: string; onExit: () => void }) {
   async function finish(ms: number) {
     const claim = stage.kind === "playing" ? stage.claim : "played";
     const saved = claim === "official" ? await finishDaily(day, ms) : false;
+    if (saved) recordDaily(day, ms);
     play(saved ? "victory" : "win");
     setStage({ kind: "done", ms, claim, saved });
   }
@@ -67,7 +69,7 @@ export function Daily({ uid, onExit }: { uid: string; onExit: () => void }) {
         <p className="mode-tag">📅 Daily challenge · {label}</p>
         <h1>{fmt(stage.ms)}</h1>
         <p className="lead center">
-          {stage.saved ? (myRank ? `You're #${myRank} of ${ranked.length} today` : "Saved!")
+          {stage.saved ? `${myRank ? `You're #${myRank} of ${ranked.length} today` : "Saved!"} · 🔥 ${streakToday(day)}-day streak`
             : stage.claim === "official" ? "Couldn't save this time (connection or clock problem). Sorry!"
             : stage.claim === "offline" ? "Just for fun: the leaderboard couldn't be reached, so this one didn't count."
             : "Just for fun. Your official time is on the board."}
@@ -89,6 +91,7 @@ export function Daily({ uid, onExit }: { uid: string; onExit: () => void }) {
       <p className="lead center">
         Same {CONFIG.dailyCards} matches for everyone today. Your first run counts. <NextIn />
       </p>
+      {streakToday(day) > 0 && <p className="streak">🔥 {streakToday(day)}-day streak{mine ? "" : ". Play today to keep it!"}</p>}
       {board === null ? <p className="hint center">Loading today's board…</p> : <Board ranked={ranked} uid={uid} />}
       <MyStatus mine={mine} rank={myRank} />
       {!mine && (

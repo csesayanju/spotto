@@ -1,5 +1,5 @@
 import { CONFIG } from "../shared/config";
-import type { GameLength, GameMode, MatchLength } from "../shared/types";
+import type { GameLength, GameMode, MatchLength, SymbolTheme } from "../shared/types";
 
 /** Display copy for each mode: lobby picker, How to play, scores and results. */
 export interface ModeInfo {
@@ -90,4 +90,10 @@ export const MATCH_INFO: Record<MatchLength, { name: string; hint: string }> = {
   single: { name: "Single", hint: "1 game" },
   bo3: { name: "Best of 3", hint: "first to 2" },
   bo5: { name: "Best of 5", hint: "first to 3" },
+};
+
+export const THEME_INFO: Record<SymbolTheme, { name: string; icon: string }> = {
+  classic: { name: "Classic", icon: "🍕" },
+  animals: { name: "Animals", icon: "🦊" },
+  food: { name: "Food", icon: "🍩" },
 };

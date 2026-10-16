@@ -140,6 +140,17 @@ button.icon.kick.small { font-size: .75rem; padding: 0 4px; }
 .daily-board li { padding-block: 6px; }
 .daily.results h1 { font-size: 3.2rem; font-variant-numeric: tabular-nums; }
 
+.home-actions .htp-btn { grid-column: 1 / -1; }
+.streak { margin: 0; text-align: center; font-weight: 800; color: var(--sun); }
+
+/* ============ stats ============ */
+.stats { height: auto; min-height: 100%; }
+.stat-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.tile { display: flex; flex-direction: column; align-items: center; padding: 14px 8px; border-radius: var(--radius); background: var(--glass); }
+.tile b { font-size: 1.8rem; color: var(--sun); font-variant-numeric: tabular-nums; line-height: 1.1; }
+.tile small { opacity: .75; }
+.stat-modes li { padding: 10px 14px; }
+
 /* ============ practice ============ */
 .practice-bar { display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 8px; }
 .clock { font-size: 2rem; font-weight: 800; color: var(--sun); font-variant-numeric: tabular-nums; }
@@ -270,6 +281,8 @@ button.icon.kick.small { font-size: .75rem; padding: 0 4px; }
 .opponents[data-count="1"] .opponent .card { width: min(62vw, 30vh); }
 .opponent figcaption { font-weight: 700; font-size: .95rem; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .opponent.got .card { box-shadow: 0 0 0 4px var(--sun), 0 6px 14px rgba(0, 0, 0, .3); }
+.opponent.offline .card { filter: grayscale(1); opacity: .45; }
+.opponent .off { color: #ffb3b8; opacity: 1; }
 .opponents.frozen .card { filter: grayscale(1); box-shadow: 0 0 0 4px var(--coral); }
 /* 5+ opponents: smaller center card and tighter spacing so a full room fits one screen. */
 .game.gift:has(.opponents[data-count="5"], .opponents[data-count="6"], .opponents[data-count="7"]) { gap: 8px; }

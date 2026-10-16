@@ -36,6 +36,7 @@ export const potato: ModeRules = {
 
     const me = players[playerId];
     const them = target ? players[target] : undefined;
+    if (them && !them.connected) return { result: { kind: "stale" }, game, players }; // they dropped out
     if (!them || target === playerId) return penalize(input);
     const myCard = deck[game.deckOrder[me.topCard]];
     const theirCard = deck[game.deckOrder[them.topCard]];

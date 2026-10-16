@@ -4,7 +4,7 @@ import { addWins } from "../engine/match";
 import { winnersOf } from "../engine/rules";
 import { CONFIG } from "../shared/config";
 import { generateDeck } from "../shared/deck";
-import type { GameLength, GameMode, MatchLength, PlayerId, Room, SymbolId, TapResult } from "../shared/types";
+import type { GameLength, GameMode, MatchLength, PlayerId, Room, SymbolId, SymbolTheme, TapResult } from "../shared/types";
 import { db, ensureSignedIn } from "./firebase";
 import { serverNow } from "./status";
 
@@ -95,4 +95,9 @@ export const nextGame = startGame;
 /** Host only, in the lobby: how long a wrong tap freezes a player. */
 export async function setPenalty(code: string, penaltyMs: number): Promise<void> {
   await update(ref(db, `rooms/${code}/meta`), { penaltyMs });
+}
+
+/** Host only, in the lobby: which emoji set the cards use. */
+export async function setTheme(code: string, theme: SymbolTheme): Promise<void> {
+  await update(ref(db, `rooms/${code}/meta`), { theme });
 }
