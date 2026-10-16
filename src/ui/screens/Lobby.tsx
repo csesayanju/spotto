@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
-import { setLength, setMatch, setMode, startGame } from "../../net/game";
-import { claimHostIfNeeded, roomLink, setReady } from "../../net/rooms";
+import { setLength, setMatch, setMode, setPenalty, startGame } from "../../net/game";
+import { claimHostIfNeeded, kick, roomLink, setReady } from "../../net/rooms";
 import { CONFIG } from "../../shared/config";
 import type { GameLength, MatchLength, Room } from "../../shared/types";
 import { Avatar } from "../components/Avatar";
+import { ConfirmSheet } from "../components/ConfirmSheet";
 import { HowToPlay } from "../components/HowToPlay";
 import { ReactionBar } from "../components/Reactions";
 import { LENGTH_INFO, MATCH_INFO, MODE_INFO, MODE_ORDER } from "../modes";
+import { BigSymbolsToggle } from "../prefs";
 import { SoundToggle } from "../sound";
 import { Spectators } from "./Watch";
 
@@ -25,6 +27,8 @@ export function Lobby({ code, room, uid, onLeave }: Props) {
   const match = room.meta.match ?? "single";
   const matchWins = room.meta.matchWins ?? {};
   const midMatch = match !== "single" && Object.keys(matchWins).length > 0;
+  const penalty = room.meta.penaltyMs ?? CONFIG.penaltyMs;
+  const [kicking, setKicking] = useState<{ id: string; name: string } | null>(null);
   const wins = room.meta.wins ?? {};
 
   // If the host drops, someone else takes over so the game can still start.
@@ -42,7 +46,7 @@ export function Lobby({ code, room, uid, onLeave }: Props) {
   return (
     <main className="screen lobby">
       <section className="code-box">
-        <SoundToggle />
+        <span className="device-toggles"><BigSymbolsToggle /><SoundToggle /></span>
         <p>Room code</p>
         <button className="room-code" onClick={share} aria-label={`Room code ${code}, tap to share`}>{code}</button>
         <p className="hint">{shared ? "Link copied! Send it to your friends." : "Tap the code to share an invite link"}</p>
@@ -79,6 +83,14 @@ export function Lobby({ code, room, uid, onLeave }: Props) {
           </button>
         ))}
       </div>
+      <div className="lengths" role="radiogroup" aria-label="Wrong-tap penalty">
+        {CONFIG.penaltyChoices.map((ms) => (
+          <button key={ms} role="radio" aria-checked={ms === penalty} className={ms === penalty ? "on" : ""}
+            disabled={!isHost} onClick={() => setPenalty(code, ms)}>
+            {ms / 1000}s<small>{ms < CONFIG.penaltyMs ? "gentle" : ms > CONFIG.penaltyMs ? "tough" : "penalty"}</small>
+          </button>
+        ))}
+      </div>
       {midMatch && (
         <p className="hint center">
           Match so far: {players.filter(([id]) => matchWins[id]).map(([id, p]) => `${p.name} ${matchWins[id]}`).join(" · ")}
@@ -99,10 +111,13 @@ export function Lobby({ code, room, uid, onLeave }: Props) {
             </span>
             {wins[id] ? <span className="wins" title="Games won in this room">🏆 {wins[id]}</span> : null}
             <span className="state">{p.ready ? "✓ Ready" : "Waiting"}</span>
+            {isHost && id !== uid && (
+              <button className="icon kick" onClick={() => setKicking({ id, name: p.name })} aria-label={`Remove ${p.name}`}>✕</button>
+            )}
           </li>
         ))}
       </ul>
-      <Spectators room={room} uid={uid} />
+      <Spectators room={room} uid={uid} onKick={isHost ? (id, name) => setKicking({ id, name }) : undefined} />
       <ReactionBar code={code} role="players" />
       <button className={me.ready ? "" : "ready-btn"} onClick={() => setReady(code, !me.ready)}>
         {me.ready ? "Not ready" : "I'm ready"}
@@ -115,6 +130,11 @@ export function Lobby({ code, room, uid, onLeave }: Props) {
       )}
       <button className="link" onClick={onLeave}>Leave room</button>
       {rules && <HowToPlay initial={mode} onClose={() => setRules(false)} />}
+      {kicking && (
+        <ConfirmSheet title={`Remove ${kicking.name}?`} message="They'll leave the room. They can join again with the code."
+          confirmLabel="Remove" onCancel={() => setKicking(null)}
+          onConfirm={() => { kick(code, kicking.id).catch(() => undefined); setKicking(null); }} />
+      )}
     </main>
   );
 }

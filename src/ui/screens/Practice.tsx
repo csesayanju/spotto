@@ -6,6 +6,7 @@ import { CONFIG } from "../../shared/config";
 import type { GameState, PlayerState, SymbolId } from "../../shared/types";
 import { SymbolCard } from "../components/SymbolCard";
 import { buzzWin, buzzWrong } from "../feedback";
+import { BigSymbolsToggle } from "../prefs";
 import { play, SoundToggle } from "../sound";
 import { FrozenBar, Stack, useGoFlash } from "./Game";
 
@@ -102,6 +103,7 @@ export function Practice({ onExit }: { onExit: () => void }) {
         <button className="icon" onClick={onExit} aria-label="Back to home">✕</button>
         <span className="clock" aria-label="Time">{fmt(elapsed)}</span>
         <span className="chip"><b>{done}/{CONFIG.practiceCards}</b></span>
+        <BigSymbolsToggle />
         <SoundToggle />
       </header>
       <SymbolCard key={centerIdx} className="pop" label="Center card" card={DECK[centerIdx]} seed={centerIdx + 1} disabled />

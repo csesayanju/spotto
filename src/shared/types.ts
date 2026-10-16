@@ -58,6 +58,8 @@ export interface RoomMeta {
   match?: MatchLength;
   /** Games won in the current match; cleared when a new match starts. */
   matchWins?: Record<PlayerId, number>;
+  /** How long a wrong tap freezes a player, in ms. Missing means CONFIG.penaltyMs. */
+  penaltyMs?: number;
   createdAt: number;
 }
 

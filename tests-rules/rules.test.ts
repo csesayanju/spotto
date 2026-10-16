@@ -144,3 +144,28 @@ describe("spectators and reactions", () => {
     await assertFails(db("host").ref("rooms/ABCD/players/host/reaction").set({ emoji: "x".repeat(40), at: 1 }));
   });
 });
+
+describe("open / closed switch", () => {
+  const close = () => env.withSecurityRulesDisabled((ctx) => ctx.database().ref("config/open").set(false));
+
+  it("nobody can flip it from the app", async () => {
+    await assertFails(db("anyone").ref("config/open").set(false));
+    await assertSucceeds(db("anyone").ref("config/open").get());
+  });
+
+  it("closed: no new rooms, no joining, no watching", async () => {
+    await seed("ABCD", room());
+    await seed("PLAY", room("playing"));
+    await close();
+    await assertFails(db("host2").ref("rooms/WXYZ").set(room()));
+    await assertFails(db("guest").ref("rooms/ABCD/players/guest").set(player("Guest")));
+    await assertFails(db("fan").ref("rooms/PLAY/spectators/fan").set({ name: "Fan", connected: true }));
+  });
+
+  it("closed: games already running carry on", async () => {
+    await seed("PLAY", room("playing"));
+    await close();
+    await assertSucceeds(db("host").ref("rooms/PLAY/meta/status").set("finished"));
+    await assertSucceeds(db("host").ref("rooms/PLAY").remove());
+  });
+});

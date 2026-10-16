@@ -15,9 +15,11 @@ interface Props {
   onPractice: () => void;
   /** Room code from an invite link. */
   invite?: string | null;
+  /** Message to show on arrival, e.g. after being removed from a room. */
+  notice?: string | null;
 }
 
-export function Home({ onEnter, onPractice, invite }: Props) {
+export function Home({ onEnter, onPractice, invite, notice }: Props) {
   const [name, setName] = useState(savedName);
   const [code, setCode] = useState(invite ?? "");
   const [error, setError] = useState<string | null>(null);
@@ -51,6 +53,7 @@ export function Home({ onEnter, onPractice, invite }: Props) {
       </div>
       <h1 className="logo">Spotto</h1>
       <p className="tagline">Find the match before your friends do.</p>
+      {notice && <p className="error" role="status">{notice}</p>}
       {invite && <p className="invite">You're invited to room <b>{invite}</b>. Enter your name and tap Join.</p>}
 
       <label className="field">Your name

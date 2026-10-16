@@ -41,3 +41,15 @@ export function useOnline(): boolean {
   }, []);
   return online;
 }
+
+/* ---------- open / closed switch ---------- */
+
+/**
+ * The owner's off switch: set config/open to false in the Firebase console to close
+ * Spotto. New rooms and joins are blocked (also by the rules); games in progress finish.
+ */
+export function useOpen(): boolean {
+  const [open, setOpen] = useState(true);
+  useEffect(() => onValue(ref(db, "config/open"), (snap) => setOpen(snap.val() !== false), () => setOpen(true)), []);
+  return open;
+}

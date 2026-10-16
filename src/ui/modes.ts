@@ -76,7 +76,7 @@ export const BASICS = [
   "Any two cards share exactly one symbol. There's always one match, never more.",
   "Symbols can be different sizes and turned any way. A big 🍕 and a tiny tilted 🍕 still match.",
   "Tap the shared symbol to claim it. The first correct tap wins the round.",
-  `Tap a wrong symbol and your card freezes for ${CONFIG.penaltyMs / 1000} seconds.`,
+  `Tap a wrong symbol and your card freezes for a moment (${CONFIG.penaltyMs / 1000} seconds unless the host changes it).`,
   `Rooms hold 2 to ${CONFIG.maxPlayers} players. The host picks the mode in the lobby.`,
 ];
 

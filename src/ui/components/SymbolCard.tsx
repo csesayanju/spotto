@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { SYMBOLS } from "../../assets/symbols";
 import type { Card, SymbolId } from "../../shared/types";
+import { useBigSymbols } from "../prefs";
 
 interface Props {
   card: Card;
@@ -16,7 +17,8 @@ interface Props {
 
 /** Card Renderer: one symbol in the middle, the rest on a ring, random size and rotation. */
 export function SymbolCard({ card, seed, onTap, disabled, label, highlight, className }: Props) {
-  const layout = useMemo(() => buildLayout(card, seed), [card, seed]);
+  const big = useBigSymbols();
+  const layout = useMemo(() => buildLayout(card, seed, big), [card, seed, big]);
   return (
     <div className={className ? `card ${className}` : "card"} role="group" aria-label={label}>
       {layout.map(({ symbol, x, y, size, rot }) => (
@@ -35,7 +37,8 @@ export function SymbolCard({ card, seed, onTap, disabled, label, highlight, clas
   );
 }
 
-function buildLayout(card: Card, seed: number) {
+/** Big mode: every symbol large and nearly upright, still on the same ring. */
+function buildLayout(card: Card, seed: number, big = false) {
   const rand = mulberry32(seed);
   const order = [...card].sort(() => rand() - 0.5);
   const ring = order.length - 1;
@@ -43,13 +46,15 @@ function buildLayout(card: Card, seed: number) {
   return order.map((symbol, i) => {
     const center = i === 0;
     const angle = offset + ((i - 1) / ring) * Math.PI * 2;
-    const r = center ? 0 : 31;
+    const r = center ? 0 : big ? 32 : 31;
+    const size = 11 + rand() * 9;
+    const rot = Math.floor(rand() * 360);
     return {
       symbol,
       x: 50 + r * Math.cos(angle),
       y: 50 + r * Math.sin(angle),
-      size: 11 + rand() * 9,
-      rot: Math.floor(rand() * 360),
+      size: big ? (center ? 22 : 19) : size,
+      rot: big ? ((rot % 40) - 20) : rot,
     };
   });
 }

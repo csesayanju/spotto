@@ -165,6 +165,20 @@ export async function leaveRoom(code: string, role: Role = "players"): Promise<v
   });
 }
 
+/** Host only: remove a player or spectator from the room. */
+export async function kick(code: string, id: PlayerId): Promise<void> {
+  await runTransaction(ref(db, `rooms/${code}`), (room: Room | null) => {
+    if (!room) return room;
+    if (room.spectators?.[id]) {
+      const { [id]: _gone, ...spectators } = room.spectators;
+      return { ...room, spectators };
+    }
+    if (!room.players?.[id] || Object.keys(room.players).length < 2) return; // abort: never kick the last player
+    const { [id]: _gone, ...players } = room.players;
+    return { ...room, players };
+  });
+}
+
 /** If the host is offline, the first connected player (by id) takes over. */
 export async function claimHostIfNeeded(code: string, room: Room, uid: string): Promise<void> {
   const host = room.players?.[room.meta.hostId];
