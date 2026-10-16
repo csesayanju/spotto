@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.0
+
+- Reactions: tap 😂 🔥 😮 😤 👏 in the lobby, during games and on the results screen; they float up on everyone's screen with your name
+- Spectators: joining a game in progress (or a full room) lets you watch live instead of being turned away. You join the players automatically at the next lobby, and rejoin as a spectator after a reload
+- If the last player leaves, spectators take over the room
+- Best-of matches: the host picks Single, Best of 3 or Best of 5. "Next game" deals the next round straight away; the match winner gets a 👑 and "New match" starts over
+- Database rules for spectators and reactions, with emulator tests
+
 ## 0.4.1
 
 Maintenance release: no gameplay changes.

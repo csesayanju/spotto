@@ -10,6 +10,10 @@ export const CONFIG = {
   potatoPile: 5,
   potatoSeconds: { quick: 45, normal: 75, full: 105 },
   maxPlayers: 8,
+  maxSpectators: 8,
+  /** Reactions a player can send, and the shortest gap between two of them. */
+  reactions: ["😂", "🔥", "😮", "😤", "👏"],
+  reactionGapMs: 800,
   roomCodeLength: 4,
   /** Cards used per game length; "full" is the whole deck. */
   lengthCards: { quick: 21, normal: 35, full: 57 },

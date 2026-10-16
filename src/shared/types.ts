@@ -5,6 +5,7 @@ export type PlayerId = string;
 export type GameMode = "tower" | "well" | "gift" | "potato";
 export type RoomStatus = "lobby" | "playing" | "finished";
 export type GameLength = "quick" | "normal" | "full";
+export type MatchLength = "single" | "bo3" | "bo5";
 
 export interface PlayerState {
   name: string;
@@ -16,6 +17,8 @@ export interface PlayerState {
   pileEnd?: number;
   /** Hot Potato only: positions in deckOrder of this player's cards, top card last. */
   pile?: number[];
+  /** Latest emoji reaction; everyone shows it when `at` changes. */
+  reaction?: Reaction;
   /** Cards that count for this mode: collected (Tower), left in pile (Well), held (Gift). */
   score: number;
   /** Epoch ms until which taps are ignored (wrong-tap penalty). */
@@ -51,13 +54,30 @@ export interface RoomMeta {
   length?: GameLength;
   /** Games won in this room, kept across rematches. */
   wins?: Record<PlayerId, number>;
+  /** Single game or best of 3/5. Missing means "single". */
+  match?: MatchLength;
+  /** Games won in the current match; cleared when a new match starts. */
+  matchWins?: Record<PlayerId, number>;
   createdAt: number;
+}
+
+export interface Reaction {
+  emoji: string;
+  at: number;
+}
+
+/** Someone watching a game in progress; they join the players at the next lobby. */
+export interface Spectator {
+  name: string;
+  connected: boolean;
+  reaction?: Reaction;
 }
 
 /** Shape of rooms/{code} in Firebase Realtime Database. */
 export interface Room {
   meta: RoomMeta;
   players: Record<PlayerId, PlayerState>;
+  spectators?: Record<PlayerId, Spectator>;
   game?: GameState;
 }
 

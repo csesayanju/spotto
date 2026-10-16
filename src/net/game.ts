@@ -1,9 +1,10 @@
 import { ref, runTransaction, update } from "firebase/database";
 import { MODES } from "../engine";
+import { addWins } from "../engine/match";
 import { winnersOf } from "../engine/rules";
 import { CONFIG } from "../shared/config";
 import { generateDeck } from "../shared/deck";
-import type { GameLength, GameMode, PlayerId, Room, SymbolId, TapResult } from "../shared/types";
+import type { GameLength, GameMode, MatchLength, PlayerId, Room, SymbolId, TapResult } from "../shared/types";
 import { db, ensureSignedIn } from "./firebase";
 import { serverNow } from "./status";
 
@@ -52,11 +53,14 @@ export async function submitTap(code: string, symbol: SymbolId, round: number, t
   return result;
 }
 
-/** Meta for a finished game: status plus a win for each winner (ties all count). */
+/** Meta for a finished game: status, plus a room win and a match win for each winner (ties all count). */
 function finishMeta(room: Room, players: Room["players"]): Room["meta"] {
-  const wins = { ...room.meta.wins };
-  for (const id of winnersOf(MODES[room.game!.mode], players)) wins[id] = (wins[id] ?? 0) + 1;
-  return { ...room.meta, wins, status: "finished" };
+  const winners = winnersOf(MODES[room.game!.mode], players);
+  return {
+    ...room.meta, status: "finished",
+    wins: addWins(room.meta.wins, winners),
+    matchWins: addWins(room.meta.matchWins, winners),
+  };
 }
 
 /**
@@ -79,3 +83,11 @@ export async function setMode(code: string, mode: GameMode): Promise<void> {
 export async function setLength(code: string, length: GameLength): Promise<void> {
   await update(ref(db, `rooms/${code}/meta`), { length });
 }
+
+/** Host only, in the lobby: single game or best of 3/5. Starts the match over. */
+export async function setMatch(code: string, match: MatchLength): Promise<void> {
+  await update(ref(db, `rooms/${code}/meta`), { match, matchWins: null });
+}
+
+/** Host only, mid-match: deal the next game straight away with the same players and settings. */
+export const nextGame = startGame;
