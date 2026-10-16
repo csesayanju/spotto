@@ -16,7 +16,7 @@ Maintenance release: no gameplay changes.
 - Android app moved to Capacitor 8 (Android 16 SDK, Java 21)
 - GitHub Actions on their Node 24 versions (no more deprecation warnings)
 - Every PR now also builds the Android APK, so Android problems show up before a release
-- Tighter database rules: no joining a game in progress or a full room, names must be 1 to 16 characters, room status and creation time are validated, and a player who left can't reappear as a ghost
+- Tighter database rules: no joining a game in progress, names must be 1 to 16 characters, room status and creation time are validated, and a player who left can't reappear as a ghost
 - Database rules have automated tests that run against the Firebase emulator in CI
 - Cleared the critical and high npm audit warnings; the 3 that remain are in Capacitor's iOS tooling, which this project doesn't use
 

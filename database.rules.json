@@ -21,9 +21,8 @@
           }
         },
         "players": {
-          ".validate": "newData.numChildren() <= 8",
           "$uid": {
-            ".write": "auth != null && auth.uid === $uid && (data.exists() || !newData.exists() || (root.child('rooms').child($code).child('meta/status').val() === 'lobby' && root.child('rooms').child($code).child('players').numChildren() < 8))",
+            ".write": "auth != null && auth.uid === $uid && (data.exists() || !newData.exists() || (root.child('rooms').child($code).child('meta/status').val() === 'lobby'))",
             ".validate": "newData.hasChildren(['name'])",
             "name": {
               ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 16"
@@ -40,7 +39,6 @@
           }
         },
         "spectators": {
-          ".validate": "newData.numChildren() <= 8",
           "$uid": {
             ".write": "auth != null && auth.uid === $uid && (data.exists() || !newData.exists() || root.child('rooms').child($code).child('meta').exists())",
             ".validate": "newData.hasChildren(['name'])",
