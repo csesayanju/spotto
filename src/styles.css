@@ -130,6 +130,16 @@ button.big-toggle.on { opacity: 1; color: var(--sun); }
 button.icon.kick { font-size: .9rem; padding: 2px 6px; opacity: .55; }
 button.icon.kick.small { font-size: .75rem; padding: 0 4px; }
 
+.home-actions .daily-btn { grid-column: 1 / -1; border-color: var(--sun); color: var(--sun); }
+
+/* ============ daily ============ */
+.daily { height: auto; min-height: 100%; }
+.daily-head { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 8px; }
+.daily-head h1 { margin: 0; font-size: 1.5rem; color: var(--sun); text-align: center; }
+.next-in { opacity: .7; }
+.daily-board li { padding-block: 6px; }
+.daily.results h1 { font-size: 3.2rem; font-variant-numeric: tabular-nums; }
+
 /* ============ practice ============ */
 .practice-bar { display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 8px; }
 .clock { font-size: 2rem; font-weight: 800; color: var(--sun); font-variant-numeric: tabular-nums; }

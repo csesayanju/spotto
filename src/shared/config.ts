@@ -8,6 +8,8 @@ export const CONFIG = {
   countdownMs: 3000,
   /** Matches in a solo practice run. */
   practiceCards: 20,
+  /** Matches in the daily challenge. */
+  dailyCards: 15,
   /** Hot Potato: most cards each player starts with, and the timer per game length. */
   potatoPile: 5,
   potatoSeconds: { quick: 45, normal: 75, full: 105 },

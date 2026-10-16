@@ -9,6 +9,7 @@ import { Game } from "./ui/screens/Game";
 import { Home } from "./ui/screens/Home";
 import { Lobby } from "./ui/screens/Lobby";
 import { Closed } from "./ui/screens/Closed";
+import { Daily } from "./ui/screens/Daily";
 import { Practice } from "./ui/screens/Practice";
 import { Watch } from "./ui/screens/Watch";
 import { Results } from "./ui/screens/Results";
@@ -20,6 +21,7 @@ export default function App() {
   const [restoring, setRestoring] = useState(true);
   const [invite] = useState(takeInviteCode);
   const [practice, setPractice] = useState(false);
+  const [daily, setDaily] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const wasIn = useRef(false);
   const { room, loaded } = useRoom(code);
@@ -83,8 +85,9 @@ export default function App() {
     if (authError) return <main className="screen"><p className="error">Sign-in failed: {authError}</p></main>;
     if (!uid || restoring) return <main className="screen"><p>Connecting…</p></main>;
     if (!code && practice) return <Practice onExit={() => setPractice(false)} />;
+    if (!code && daily) return <Daily uid={uid} onExit={() => setDaily(false)} />;
     if (!code && !open) return <Closed onPractice={() => setPractice(true)} />;
-    if (!code) return <Home onEnter={(c) => { setNotice(null); setCode(c); }} onPractice={() => setPractice(true)} invite={invite} notice={notice} />;
+    if (!code) return <Home onEnter={(c) => { setNotice(null); setCode(c); }} onPractice={() => setPractice(true)} onDaily={() => setDaily(true)} invite={invite} notice={notice} />;
     if (!room || !role) return <main className="screen"><p>Joining room…</p></main>;
     if (role === "spectators" && room.meta.status !== "finished") {
       return <Watch code={code} room={room} uid={uid} onLeave={leave} />;
