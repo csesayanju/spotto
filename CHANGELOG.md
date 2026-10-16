@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.7.0
+
+- Daily challenge (📅 on the home screen): the same 15 matches for everyone each day, new one at midnight UTC (5:30 am in India)
+- Your first run of the day counts; replay as often as you like just for fun
+- Live leaderboard: top 10 plus your own rank
+- Times are checked by the database rules against the server's clock, so a made-up time is rejected
+- Practice and Daily share one solo game screen
+
 ## 0.6.0
 
 - Host settings in the lobby: wrong-tap penalty of 1s (gentle), 1.5s or 3s (tough)

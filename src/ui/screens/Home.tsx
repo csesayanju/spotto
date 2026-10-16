@@ -13,13 +13,14 @@ function savedName(): string {
 interface Props {
   onEnter: (code: string) => void;
   onPractice: () => void;
+  onDaily: () => void;
   /** Room code from an invite link. */
   invite?: string | null;
   /** Message to show on arrival, e.g. after being removed from a room. */
   notice?: string | null;
 }
 
-export function Home({ onEnter, onPractice, invite, notice }: Props) {
+export function Home({ onEnter, onPractice, onDaily, invite, notice }: Props) {
   const [name, setName] = useState(savedName);
   const [code, setCode] = useState(invite ?? "");
   const [error, setError] = useState<string | null>(null);
@@ -73,6 +74,7 @@ export function Home({ onEnter, onPractice, invite, notice }: Props) {
       {error && <p className="error" role="alert">{error}</p>}
 
       <div className="home-actions">
+        <button className="secondary daily-btn" onClick={onDaily}>📅 Daily challenge</button>
         <button className="secondary" onClick={onPractice}>🎯 Practice</button>
         <button className="secondary" onClick={() => setRules(true)}>📖 How to play</button>
       </div>

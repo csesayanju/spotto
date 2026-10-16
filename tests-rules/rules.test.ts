@@ -169,3 +169,47 @@ describe("open / closed switch", () => {
     await assertSucceeds(db("host").ref("rooms/PLAY").remove());
   });
 });
+
+describe("daily challenge", () => {
+  const DAY = "2026-10-16";
+  const start = (uid: string) => db(uid).ref(`daily/${DAY}/${uid}`).set({ name: "Me", startedAt: { ".sv": "timestamp" } });
+  const backdate = (uid: string, ms: number) =>
+    env.withSecurityRulesDisabled((ctx) => ctx.database().ref(`daily/${DAY}/${uid}/startedAt`).set(Date.now() - ms));
+
+  it("one official attempt per player per day", async () => {
+    await assertSucceeds(start("me"));
+    await assertFails(start("me"));
+    await assertFails(db("me").ref(`daily/${DAY}/other`).set({ name: "X", startedAt: { ".sv": "timestamp" } }));
+  });
+
+  it("the start time has to be the server's", async () => {
+    await assertFails(db("me").ref(`daily/${DAY}/me`).set({ name: "Me", startedAt: 1 }));
+  });
+
+  it("accepts a time that matches the server clock", async () => {
+    await start("me");
+    await backdate("me", 15_000); // started 15 s ago: 3 s countdown + about 12 s of play
+    await assertSucceeds(db("me").ref(`daily/${DAY}/me/ms`).set(12_000));
+    await assertFails(db("me").ref(`daily/${DAY}/me/ms`).set(11_000)); // no second go
+  });
+
+  it("rejects a time faster or slower than really happened", async () => {
+    await start("fast");
+    await backdate("fast", 30_000);
+    await assertFails(db("fast").ref(`daily/${DAY}/fast/ms`).set(5_000)); // claims 5 s after 30 s
+    await start("slow");
+    await backdate("slow", 10_000);
+    await assertFails(db("slow").ref(`daily/${DAY}/slow/ms`).set(20_000)); // longer than it's been
+  });
+
+  it("everyone signed in can read the board", async () => {
+    await start("me");
+    await assertSucceeds(db("other").ref(`daily/${DAY}`).get());
+    await assertFails(db().ref(`daily/${DAY}`).get());
+  });
+
+  it("no new attempts while Spotto is closed", async () => {
+    await env.withSecurityRulesDisabled((ctx) => ctx.database().ref("config/open").set(false));
+    await assertFails(start("me"));
+  });
+});
