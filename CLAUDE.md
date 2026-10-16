@@ -59,6 +59,9 @@ Copyright line in the app: "© <year> Sayan".
   new rules (e.g. spectators, daily) only work after the release deploys them.
 - Owner's off switch: set `config/open` to `false` in the Firebase console
   (data, not rules). The app can't write it.
+- Analytics: `analytics/{day}/{id}` append-only anonymous events (fixed field
+  list, no IPs); readable only by `admins/{uid} = true` (set in the console).
+  Dev page at `?dev`. Google Analytics is optional via `VITE_FIREBASE_MEASUREMENT_ID`.
 
 ## CI/CD (.github/workflows)
 

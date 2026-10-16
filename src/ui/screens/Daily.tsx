@@ -5,6 +5,7 @@ import { serverNow, useCountdown } from "../../net/status";
 import { CONFIG } from "../../shared/config";
 import { Avatar } from "../components/Avatar";
 import { Footer } from "../components/Footer";
+import { track } from "../../net/analytics";
 import { play } from "../sound";
 import { recordDaily, streakToday } from "../stats";
 import { fmt, SoloRun } from "./SoloRun";
@@ -47,6 +48,7 @@ export function Daily({ uid, onExit }: { uid: string; onExit: () => void }) {
     const claim = stage.kind === "playing" ? stage.claim : "played";
     const saved = claim === "official" ? await finishDaily(day, ms) : false;
     if (saved) recordDaily(day, ms);
+    track("daily_done", { ms: Math.round(ms), official: saved });
     play(saved ? "victory" : "win");
     setStage({ kind: "done", ms, claim, saved });
   }
