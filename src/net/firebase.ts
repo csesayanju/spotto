@@ -8,8 +8,11 @@ const app = initializeApp({
   databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL,
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  // Optional: set once Google Analytics is enabled for the Firebase project.
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || undefined,
 });
 
+export { app };
 export const auth = getAuth(app);
 export const db = getDatabase(app);
 

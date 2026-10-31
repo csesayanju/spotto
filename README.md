@@ -86,6 +86,18 @@ git tag v0.1.2 && git push origin v0.1.2
 The live game is at `https://<project-id>.web.app`, and the APK is on the
 repo's Releases page.
 
+## Developer analytics
+
+Open the site with `?dev` at the end of the address (or tap "📈 Analytics" on the
+home screen once unlocked). The page shows your device's anonymous id; add it in
+the Firebase console under Realtime Database > Data as `admins` > `<id>` = `true`
+(boolean). Only listed admins can read analytics.
+
+Google Analytics (countries, cities, visits): enable it in Firebase console >
+Project settings > Integrations > Google Analytics, copy the web app's
+`measurementId` (G-...), and add it as the GitHub variable
+`VITE_FIREBASE_MEASUREMENT_ID`. It's used from the next release on.
+
 ## Closing Spotto for a while
 
 To switch Spotto off without a release, open the Firebase console, then

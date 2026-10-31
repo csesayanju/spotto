@@ -15,13 +15,15 @@ interface Props {
   onPractice: () => void;
   onDaily: () => void;
   onStats: () => void;
+  /** Only passed for admins: opens the developer analytics page. */
+  onDev?: () => void;
   /** Room code from an invite link. */
   invite?: string | null;
   /** Message to show on arrival, e.g. after being removed from a room. */
   notice?: string | null;
 }
 
-export function Home({ onEnter, onPractice, onDaily, onStats, invite, notice }: Props) {
+export function Home({ onEnter, onPractice, onDaily, onStats, onDev, invite, notice }: Props) {
   const [name, setName] = useState(savedName);
   const [code, setCode] = useState(invite ?? "");
   const [error, setError] = useState<string | null>(null);
@@ -83,6 +85,7 @@ export function Home({ onEnter, onPractice, onDaily, onStats, invite, notice }: 
       {installer.kind === "prompt" && <button className="secondary" onClick={installer.install}>📲 Install the app</button>}
       {installer.kind === "ios" && <p className="hint center">Install on iPhone: tap Share, then “Add to Home Screen”.</p>}
       {rules && <HowToPlay onClose={() => setRules(false)} />}
+      {onDev && <button className="link" onClick={onDev}>📈 Analytics (dev)</button>}
       <Footer />
     </main>
   );

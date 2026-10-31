@@ -213,3 +213,38 @@ describe("daily challenge", () => {
     await assertFails(start("me"));
   });
 });
+
+describe("analytics", () => {
+  const DAY = "2026-10-16";
+  const event = (uid: string, extra: Record<string, unknown> = {}) =>
+    ({ uid, e: "app_open", at: { ".sv": "timestamp" }, v: "0.8.1", dev: "phone", app: "web", ...extra });
+  const makeAdmin = (uid: string) => env.withSecurityRulesDisabled((ctx) => ctx.database().ref(`admins/${uid}`).set(true));
+
+  it("anyone signed in can log their own events, but not edit them", async () => {
+    const r = db("me").ref(`analytics/${DAY}`).push();
+    await assertSucceeds(r.set(event("me")));
+    await assertFails(r.update({ e: "changed" }));
+    await assertFails(db("me").ref(`analytics/${DAY}`).push().set(event("someone-else")));
+  });
+
+  it("events can't carry extra data (no IPs, no names)", async () => {
+    await assertFails(db("me").ref(`analytics/${DAY}`).push().set(event("me", { ip: "1.2.3.4" })));
+    await assertFails(db("me").ref(`analytics/${DAY}`).push().set(event("me", { at: 5 })));
+  });
+
+  it("only admins can read or clear analytics", async () => {
+    await db("me").ref(`analytics/${DAY}`).push().set(event("me"));
+    await assertFails(db("me").ref(`analytics/${DAY}`).get());
+    await makeAdmin("boss");
+    await assertSucceeds(db("boss").ref(`analytics/${DAY}`).get());
+    await assertSucceeds(db("boss").ref(`analytics/${DAY}`).remove());
+    await assertFails(db("me").ref("admins/me").set(true));
+  });
+
+  it("you can check whether you're an admin, but not see who else is", async () => {
+    await makeAdmin("boss");
+    await assertSucceeds(db("boss").ref("admins/boss").get());
+    await assertSucceeds(db("me").ref("admins/me").get());
+    await assertFails(db("me").ref("admins/boss").get());
+  });
+});

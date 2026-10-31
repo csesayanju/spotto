@@ -6,6 +6,7 @@ import { CONFIG } from "../shared/config";
 import { generateDeck } from "../shared/deck";
 import type { GameLength, GameMode, MatchLength, PlayerId, Room, SymbolId, SymbolTheme, TapResult } from "../shared/types";
 import { db, ensureSignedIn } from "./firebase";
+import { track } from "./analytics";
 import { serverNow } from "./status";
 
 export const DECK = generateDeck(CONFIG.order);
@@ -26,6 +27,7 @@ export async function startGame(code: string, room: Room): Promise<void> {
     patch[`players/${id}/frozenUntil`] = 0;
   }
   await update(ref(db, `rooms/${code}`), patch);
+  track("game_start", { mode: room.meta.mode, players: ids.length, len: length, match: room.meta.match ?? "single", theme: room.meta.theme ?? "classic" });
 }
 
 /**

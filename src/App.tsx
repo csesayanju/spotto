@@ -2,6 +2,8 @@ import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { ensureSignedIn } from "./net/firebase";
 import { trackPresence } from "./net/presence";
 import { claimHostIfNeeded, leaveRoom, restoreRoom, roleIn, saveRoomCode, takeInviteCode } from "./net/rooms";
+import { track } from "./net/analytics";
+import { useIsAdmin } from "./net/devstats";
 import { useOnline, useOpen } from "./net/status";
 import { useRoom } from "./state/store";
 import { ReactionLayer } from "./ui/components/Reactions";
@@ -11,6 +13,17 @@ import { ThemeContext } from "./ui/theme";
 const Daily = lazy(() => import("./ui/screens/Daily").then((m) => ({ default: m.Daily })));
 const Practice = lazy(() => import("./ui/screens/Practice").then((m) => ({ default: m.Practice })));
 const StatsScreen = lazy(() => import("./ui/screens/StatsScreen").then((m) => ({ default: m.StatsScreen })));
+const DevAnalytics = lazy(() => import("./ui/screens/DevAnalytics").then((m) => ({ default: m.DevAnalytics })));
+
+/** ?dev in the address opens the analytics page (it explains how to unlock it if you're not an admin). */
+function takeDevFlag(): boolean {
+  const params = new URLSearchParams(location.search);
+  if (!params.has("dev")) return false;
+  params.delete("dev");
+  const rest = params.toString();
+  history.replaceState(null, "", location.pathname + (rest ? `?${rest}` : "") + location.hash);
+  return true;
+}
 import { Game } from "./ui/screens/Game";
 import { Home } from "./ui/screens/Home";
 import { Lobby } from "./ui/screens/Lobby";
@@ -27,6 +40,8 @@ export default function App() {
   const [practice, setPractice] = useState(false);
   const [daily, setDaily] = useState(false);
   const [stats, setStats] = useState(false);
+  const [dev, setDev] = useState(takeDevFlag);
+  const admin = useIsAdmin(uid);
   const [notice, setNotice] = useState<string | null>(null);
   const wasIn = useRef(false);
   const { room, loaded } = useRoom(code);
@@ -38,7 +53,7 @@ export default function App() {
   // Sign in, then rejoin the last room if this device was in one.
   useEffect(() => {
     ensureSignedIn()
-      .then(async (id) => { setUid(id); setCode(await restoreRoom()); })
+      .then(async (id) => { setUid(id); setCode(await restoreRoom()); track("app_open"); })
       .catch((e) => setAuthError(e.code ?? e.message))
       .finally(() => setRestoring(false));
   }, []);
@@ -99,8 +114,9 @@ export default function App() {
     if (!code && practice) return <Practice onExit={() => setPractice(false)} />;
     if (!code && daily) return <Daily uid={uid} onExit={() => setDaily(false)} />;
     if (!code && stats) return <StatsScreen onExit={() => setStats(false)} />;
+    if (!code && dev) return <DevAnalytics uid={uid} onExit={() => setDev(false)} />;
     if (!code && !open) return <Closed onPractice={() => setPractice(true)} />;
-    if (!code) return <Home onEnter={(c) => { setNotice(null); setCode(c); }} onPractice={() => setPractice(true)} onDaily={() => setDaily(true)} onStats={() => setStats(true)} invite={invite} notice={notice} />;
+    if (!code) return <Home onEnter={(c) => { setNotice(null); setCode(c); }} onPractice={() => setPractice(true)} onDaily={() => setDaily(true)} onStats={() => setStats(true)} onDev={admin ? () => setDev(true) : undefined} invite={invite} notice={notice} />;
     if (!room || !role) return <main className="screen"><p>Joining room…</p></main>;
     if (role === "spectators" && room.meta.status !== "finished") {
       return <Watch code={code} room={room} uid={uid} onLeave={leave} />;

@@ -10,6 +10,8 @@ import { roleIn } from "../../net/rooms";
 import { MATCH_INFO, MODE_INFO } from "../modes";
 import { play } from "../sound";
 import { recordGame } from "../stats";
+import { track } from "../../net/analytics";
+import { serverNow } from "../../net/status";
 
 interface Props { code: string; room: Room; uid: string; onLeave: () => void }
 
@@ -36,6 +38,9 @@ export function Results({ code, room, uid, onLeave }: Props) {
   useEffect(() => {
     play(iWon ? "victory" : "defeat");
     if (role === "players" && room.game) recordGame(`${code}:${room.game.startsAt}`, mode, iWon);
+    if (isHost && room.game?.startsAt) {
+      track("game_end", { mode, players: Object.keys(room.players).length, ms: Math.max(0, serverNow() - room.game.startsAt) });
+    }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const title = winners.length > 1 ? `Tie: ${winners.join(" & ")}`

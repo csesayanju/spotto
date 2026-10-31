@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { CONFIG } from "../../shared/config";
+import { track } from "../../net/analytics";
 import { play } from "../sound";
 import { fmt, SoloRun } from "./SoloRun";
 
@@ -17,6 +18,7 @@ export function Practice({ onExit }: { onExit: () => void }) {
   const [newBest, setNewBest] = useState(false);
 
   function finish(time: number) {
+    track("practice_done", { ms: Math.round(time) });
     const record = best === null || time < best;
     setFinishedIn(time);
     setNewBest(record);
