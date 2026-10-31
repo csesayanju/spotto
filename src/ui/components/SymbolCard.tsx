@@ -8,7 +8,7 @@ interface Props {
   card: Card;
   /** Seed for the layout so a card keeps its look across re-renders. */
   seed: number;
-  onTap?: (symbol: SymbolId) => void;
+  onTap?: (symbol: SymbolId, e: React.MouseEvent) => void;
   disabled?: boolean;
   label: string;
   /** Symbol to ring, e.g. the match in a How to play example. */
@@ -28,7 +28,7 @@ export function SymbolCard({ card, seed, onTap, disabled, label, highlight, clas
           key={symbol}
           className={symbol === highlight ? "symbol hit" : "symbol"}
           disabled={disabled}
-          onClick={() => onTap?.(symbol)}
+          onClick={(e) => onTap?.(symbol, e)}
           style={{ left: `${x}%`, top: `${y}%`, fontSize: `${size}cqw`, transform: `translate(-50%,-50%) rotate(${rot}deg)` }}
           aria-label={`Symbol ${symbol}`}
         >

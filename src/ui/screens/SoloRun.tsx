@@ -5,6 +5,7 @@ import { serverNow, useCountdown } from "../../net/status";
 import { CONFIG } from "../../shared/config";
 import type { GameState, PlayerState, SymbolId } from "../../shared/types";
 import { SymbolCard } from "../components/SymbolCard";
+import { tapPoint, useTapFx } from "../components/TapFx";
 import { buzzWin, buzzWrong } from "../feedback";
 import { BigSymbolsToggle } from "../prefs";
 import { play, SoundToggle } from "../sound";
@@ -58,14 +59,18 @@ export function SoloRun({ label, matches, rand, hint, onFinish, onExit }: Props)
   useEffect(() => { if (waiting) play("tick"); }, [waiting, secondsLeft]);
   useEffect(() => { if (go) play("go"); }, [go]);
 
-  function tap(symbol: SymbolId) {
+  const fx = useTapFx();
+
+  function tap(symbol: SymbolId, e: React.MouseEvent) {
     if (waiting || done) return;
+    const at = tapPoint(e);
     const now = serverNow();
     const out = tower.resolveTap({ deck: DECK, game, players, playerId: ME, symbol, round: game.round, now, penaltyMs: CONFIG.penaltyMs });
     setRun({ game: out.game, players: out.players });
-    if (out.result.kind === "wrong") { buzzWrong(); play("wrong"); }
+    if (out.result.kind === "wrong") { buzzWrong(); play("wrong"); fx.show(at.x, at.y, "miss"); }
     if (out.result.kind !== "win") return;
     buzzWin();
+    fx.show(at.x, at.y, "hit");
     if (!tower.isOver(out.game, out.players)) { play("win"); return; }
     setDone(true);
     onFinish(now - game.startsAt!);
@@ -87,12 +92,13 @@ export function SoloRun({ label, matches, rand, hint, onFinish, onExit }: Props)
       <div className="banner" aria-live="polite">
         {frozen ? <FrozenBar left={frozenLeft} /> : hint}
       </div>
-      <div className={frozen ? "mine frozen" : "mine"}>
+      <div className={["mine", frozen && "frozen", fx.shaking && "shake"].filter(Boolean).join(" ")}>
         <Stack cards={me.score} />
         <SymbolCard key={me.topCard} className="pop" label="Your card" card={DECK[myIdx]} seed={myIdx + 1000}
           onTap={tap} disabled={frozen} />
       </div>
       <span />
+      {fx.layer}
       {(waiting || go) && (
         <div className="countdown" aria-live="assertive">
           <span key={waiting ? secondsLeft : "go"}>{waiting ? secondsLeft : "Go!"}</span>
