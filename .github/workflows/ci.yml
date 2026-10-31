@@ -102,3 +102,6 @@ jobs:
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           projectId: ${{ vars.VITE_FIREBASE_PROJECT_ID }}
           expires: 7d
+          # Same pinned CLI as release.yml: newer versions check an extra Google API
+          # permission (serviceusage.services.get) that the service account doesn't have.
+          firebaseToolsVersion: 15.31.0
