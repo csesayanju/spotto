@@ -9,6 +9,7 @@ import { colorFor } from "../components/Avatar";
 import { ConfirmSheet } from "../components/ConfirmSheet";
 import { ReactionBar } from "../components/Reactions";
 import { SymbolCard } from "../components/SymbolCard";
+import { tapPoint, useTapFx } from "../components/TapFx";
 import { buzzWin, buzzWrong } from "../feedback";
 import { MODE_INFO } from "../modes";
 import { BigSymbolsToggle } from "../prefs";
@@ -40,11 +41,14 @@ export function Game({ code, room, uid, onLeave }: Props) {
   useEffect(() => { if (waiting) play("tick"); }, [waiting, secondsLeft]);
   useEffect(() => { if (go) play("go"); }, [go]);
 
-  async function tap(symbol: SymbolId, target?: PlayerId) {
+  const fx = useTapFx();
+
+  async function tap(symbol: SymbolId, e: React.MouseEvent, target?: PlayerId) {
     if (waiting) return;
+    const at = tapPoint(e);
     const res = await submitTap(code, symbol, game.round, target);
-    if (res.kind === "win") buzzWin();
-    if (res.kind === "wrong") { buzzWrong(); play("wrong"); }
+    if (res.kind === "win") { buzzWin(); fx.show(at.x, at.y, "hit"); }
+    if (res.kind === "wrong") { buzzWrong(); play("wrong"); fx.show(at.x, at.y, "miss"); }
   }
 
   // Leader chip: best score for this mode (most or fewest cards), only once someone is ahead.
@@ -61,36 +65,38 @@ export function Game({ code, room, uid, onLeave }: Props) {
     : game.mode === "potato" ? <span className={timeLeft < 10_000 ? "fuse hot" : "fuse"}>{timer} · you hold {info.score(me.score)}</span>
     : `${left} cards left`;
   const myCard = me.topCard >= 0 && (
-    <div className={frozen ? "mine frozen" : "mine"}>
+    <div className={["mine", frozen && "frozen", fx.shaking && game.mode !== "potato" && "shake"].filter(Boolean).join(" ")}>
       <Stack cards={me.score} />
       <SymbolCard key={me.topCard} className="pop" label="Your card" card={DECK[game.deckOrder[me.topCard]]}
-        seed={game.deckOrder[me.topCard] + 1000} onTap={(s) => tap(s)}
+        seed={game.deckOrder[me.topCard] + 1000} onTap={(s, e) => tap(s, e)}
         disabled={frozen || game.mode === "potato"} />
     </div>
   );
 
   return (
     <main className={`screen game ${game.mode}${waiting ? " waiting" : ""}`}>
-      <header className="scores">
-        {Object.entries(room.players).map(([id, p]) => (
-          <span key={id} className={["chip", id === uid && "me", isLeader(p.score) && "leader", !p.connected && "offline"]
-            .filter(Boolean).join(" ")}>
-            <i style={{ background: colorFor(id) }} aria-hidden />
-            {id === uid ? "You" : p.name} <b>{info.score(p.score)}</b>
-          </span>
-        ))}
-        <SoundToggle />
-        <BigSymbolsToggle />
+      <header className="hud">
+        <div className="scores">
+          {Object.entries(room.players).map(([id, p]) => (
+            <span key={id} className={["chip", id === uid && "me", isLeader(p.score) && "leader", !p.connected && "offline"]
+              .filter(Boolean).join(" ")} aria-label={`${id === uid ? "You" : p.name}: ${info.score(p.score)}`}>
+              <i style={{ background: colorFor(id) }} aria-hidden />
+              {id === uid ? "You" : p.name} <b key={p.score} className="bump">{p.score}</b>
+            </span>
+          ))}
+        </div>
+        <div className="hud-tools"><SoundToggle /><BigSymbolsToggle /></div>
       </header>
       {game.mode === "potato"
-        ? <Opponents room={room} uid={uid} frozen={frozen} onTap={tap} />
+        ? <Opponents room={room} uid={uid} frozen={frozen} shaking={fx.shaking} onTap={tap} />
         : <SymbolCard key={centerIdx} className="pop" label="Center card" card={DECK[centerIdx]} seed={centerIdx + 1} disabled />}
       <div className={banner ? "banner show" : "banner"} aria-live="polite">
         {frozen ? <FrozenBar left={frozenLeft} total={room.meta.penaltyMs} />
           : banner ? <Replay {...banner} />
           : status}
       </div>
-      {game.mode === "gift" ? <Opponents room={room} uid={uid} frozen={frozen} onTap={tap} /> : myCard}
+      {game.mode === "gift" ? <Opponents room={room} uid={uid} frozen={frozen} shaking={fx.shaking} onTap={tap} /> : myCard}
+      {fx.layer}
       <footer className="game-foot">
         <ReactionBar code={code} role="players" />
         <button className="link" onClick={() => setConfirmLeave(true)}>Leave</button>
@@ -110,20 +116,21 @@ export function Game({ code, room, uid, onLeave }: Props) {
 }
 
 /** Gift and Hot Potato: everyone else's top card. Tap the match on someone's card to send them a card. */
-export function Opponents({ room, uid, frozen, onTap }: {
-  room: Room; uid: string; frozen: boolean; onTap?: (symbol: SymbolId, target: PlayerId) => void;
+export function Opponents({ room, uid, frozen, shaking, onTap }: {
+  room: Room; uid: string; frozen: boolean; shaking?: boolean;
+  onTap?: (symbol: SymbolId, e: React.MouseEvent, target: PlayerId) => void;
 }) {
   const game = room.game!;
   const others = Object.entries(room.players).filter(([id]) => id !== uid);
   return (
-    <div className={frozen ? "opponents frozen" : "opponents"} data-count={others.length}>
+    <div className={["opponents", frozen && "frozen", shaking && "shake"].filter(Boolean).join(" ")} data-count={others.length}>
       {others.map(([id, p]) => {
         const idx = game.deckOrder[p.topCard];
         return (
           <figure key={id} className={["opponent", id === game.lastTarget && "got", !p.connected && "offline"].filter(Boolean).join(" ")}>
             {p.topCard >= 0
               ? <SymbolCard key={idx} className="pop" label={`${p.name}'s card`} card={DECK[idx]} seed={idx + 2000}
-                  onTap={onTap && ((s) => onTap(s, id))} disabled={frozen || !onTap || !p.connected} />
+                  onTap={onTap && ((s, e) => onTap(s, e, id))} disabled={frozen || !onTap || !p.connected} />
               : <div className="card empty" aria-label={`${p.name} has no cards`} />}
             <figcaption>{p.name}{game.mode === "potato" && <small> · {p.score}</small>}{!p.connected && <small className="off"> offline</small>}</figcaption>
           </figure>

@@ -13,6 +13,8 @@
   --line: rgba(255, 255, 255, .22);
   --radius: 16px;
   --shadow: 0 10px 24px rgba(0, 0, 0, .35);
+  --shadow-sm: 0 4px 12px rgba(0, 0, 0, .25);
+  --ease-pop: cubic-bezier(.3, 1.6, .5, 1);
   font-family: "Baloo 2", "Trebuchet MS", system-ui, sans-serif;
   color: #fff;
   background: var(--felt);
@@ -21,7 +23,12 @@
 * { box-sizing: border-box; }
 html, body, #root { height: 100%; margin: 0; }
 body {
-  background: radial-gradient(circle at 50% 35%, var(--felt-light), var(--felt) 65%, var(--felt-deep));
+  /* Felt: a fine weave texture over a soft spotlight. */
+  background:
+    radial-gradient(rgba(255, 255, 255, .035) 1px, transparent 1.2px) 0 0 / 5px 5px,
+    radial-gradient(rgba(0, 0, 0, .05) 1px, transparent 1.2px) 2.5px 2.5px / 5px 5px,
+    radial-gradient(circle at 50% 35%, var(--felt-light), var(--felt) 65%, var(--felt-deep));
+  background-attachment: fixed;
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior: none;
 }
@@ -94,7 +101,32 @@ button.icon.sound { font-size: 1.25rem; padding: 4px 8px; }
 .lengths button:disabled { opacity: 1; }
 .lengths button:disabled:not(.on) { opacity: .45; }
 
+/* ============ screen entrances ============ */
+/* Opacity only on the screen itself: a transform there would break fixed overlays inside it. */
+.screen { animation: fade .22s ease-out; }
+.screen > :is(section, ul, ol, fieldset, h1, h2, header, .card, .mine, .opponents, .hero, .lengths, nav):nth-child(-n + 8) {
+  animation: enter .32s ease-out both;
+}
+.screen > :nth-child(2) { animation-delay: .03s; }
+.screen > :nth-child(3) { animation-delay: .06s; }
+.screen > :nth-child(4) { animation-delay: .09s; }
+.screen > :nth-child(5) { animation-delay: .12s; }
+.screen > :nth-child(6) { animation-delay: .15s; }
+@keyframes enter { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
 /* ============ home ============ */
+.panel { display: flex; flex-direction: column; gap: 10px; padding: 16px; border-radius: 20px; background: rgba(0, 0, 0, .16); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .06); }
+.panel-title { margin: 0; font-size: .82rem; letter-spacing: .08em; text-transform: uppercase; opacity: .65; }
+.solo { display: flex; flex-direction: column; gap: 8px; }
+.solo-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.solo-btn {
+  display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 12px 8px; border-radius: 18px;
+  min-height: 0; line-height: 1.15;
+}
+.solo-btn span { font-size: 1.6rem; }
+.solo-btn small { font-size: .78rem; font-weight: 500; opacity: .7; }
+.solo-btn.daily { border-color: var(--sun); color: var(--sun); background: rgba(246, 196, 69, .1); }
+.quick-links { display: flex; justify-content: center; gap: 14px; flex-wrap: wrap; }
 .home { gap: 12px; }
 .hero { display: flex; justify-content: center; margin-bottom: -6px; }
 .mini {
@@ -118,8 +150,6 @@ button.icon.sound { font-size: 1.25rem; padding: 4px 8px; }
 .join input:not(:placeholder-shown) { letter-spacing: .35em; }
 .join button { min-width: 96px; }
 
-.home-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.home-actions button { padding-inline: 8px; }
 
 .lead.center { text-align: center; margin: 0; }
 .closed .trophy { text-align: center; }
@@ -130,7 +160,6 @@ button.big-toggle.on { opacity: 1; color: var(--sun); }
 button.icon.kick { font-size: .9rem; padding: 2px 6px; opacity: .55; }
 button.icon.kick.small { font-size: .75rem; padding: 0 4px; }
 
-.home-actions .daily-btn { grid-column: 1 / -1; border-color: var(--sun); color: var(--sun); }
 
 /* ============ daily ============ */
 .daily { height: auto; min-height: 100%; }
@@ -140,7 +169,6 @@ button.icon.kick.small { font-size: .75rem; padding: 0 4px; }
 .daily-board li { padding-block: 6px; }
 .daily.results h1 { font-size: 3.2rem; font-variant-numeric: tabular-nums; }
 
-.home-actions .htp-btn { grid-column: 1 / -1; }
 .streak { margin: 0; text-align: center; font-weight: 800; color: var(--sun); }
 
 /* ============ stats ============ */
@@ -201,12 +229,35 @@ a.button-link {
 
 /* ============ lobby ============ */
 .lobby { height: auto; min-height: 100%; }
-.code-box { position: relative; text-align: center; padding: 12px; border-radius: var(--radius); background: var(--glass); }
+.code-box { position: relative; padding: 12px; border-radius: var(--radius); background: var(--glass); }
 .code-box p { margin: 0; }
+.code-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-right: 64px; }
+.code-label { margin: 0; font-size: .85rem; opacity: .7; }
 .room-code {
-  border: 0; background: none; min-height: 0; padding: 0; margin: 2px 0;
-  font-size: 3.6rem; font-weight: 800; letter-spacing: .25em; text-indent: .25em; color: var(--sun);
+  border: 0; background: none; min-height: 0; padding: 0; margin: 0;
+  font-size: 2.6rem; font-weight: 800; letter-spacing: .18em; color: var(--sun); line-height: 1.05;
 }
+.share-btn { min-height: 0; padding: 8px 14px; font-size: .95rem; border-color: var(--sun); color: var(--sun); white-space: nowrap; }
+
+/* Lobby settings: one summary line; the host expands it to change things. */
+.settings { border-radius: var(--radius); background: var(--glass); overflow: hidden; }
+.settings-summary {
+  width: 100%; min-height: 0; display: flex; align-items: center; gap: 10px; padding: 12px 14px;
+  border: 0; border-radius: 0; background: none; text-align: left; font-size: .95rem; font-weight: 700;
+}
+.settings-summary:disabled { opacity: 1; cursor: default; }
+.settings-text { flex: 1; min-width: 0; }
+.settings-edit { color: var(--sun); font-size: .9rem; }
+.settings-body { display: flex; flex-direction: column; gap: 8px; padding: 0 10px 12px; animation: enter .2s ease-out; }
+
+/* Ready/Start stay in reach at the bottom of the screen. */
+.action-bar {
+  position: sticky; bottom: 0; z-index: 4; display: grid; grid-template-columns: 1fr 1.4fr; gap: 8px; align-items: center;
+  margin: 4px -20px calc(-1 * (env(safe-area-inset-bottom) + 16px));
+  padding: 14px 20px calc(env(safe-area-inset-bottom) + 14px);
+  background: linear-gradient(to top, var(--felt-deep) 70%, transparent);
+}
+.action-bar .hint { margin: 0; text-align: center; }
 
 .modes { border: 0; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
 .modes legend { padding: 0; margin-bottom: 8px; font-weight: 700; }
@@ -241,7 +292,18 @@ a.button-link {
 
 /* ============ game ============ */
 .game { justify-content: space-between; align-items: center; }
+/* HUD: one compact row; scores scroll sideways instead of wrapping into extra rows. */
+.hud { display: flex; align-items: center; gap: 4px; width: 100%; min-height: 34px; }
+.hud .scores {
+  flex: 1; min-width: 0; flex-wrap: nowrap; justify-content: flex-start; overflow-x: auto; scrollbar-width: none;
+  -webkit-mask-image: linear-gradient(90deg, #000 88%, transparent); mask-image: linear-gradient(90deg, #000 88%, transparent);
+  padding-right: 18px;
+}
+.hud .scores::-webkit-scrollbar { display: none; }
+.hud-tools { display: flex; flex-shrink: 0; }
+.hud-tools .icon { padding: 4px 6px; }
 .scores { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+.chip { flex-shrink: 0; white-space: nowrap; }
 .chip {
   display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 6px;
   border-radius: 999px; background: var(--glass); font-size: .92rem; font-weight: 700;
@@ -255,13 +317,15 @@ a.button-link {
 
 .card {
   container-type: inline-size;
-  position: relative; width: min(80vw, 38vh); aspect-ratio: 1;
-  border-radius: 50%; background: var(--card);
-  box-shadow: 0 0 0 6px var(--sun), var(--shadow);
+  position: relative; width: min(80vw, calc((100vh - 250px) / 2)); aspect-ratio: 1;
+  border-radius: 50%; background: radial-gradient(circle at 50% 38%, #fff, var(--card) 70%, #f1efe6);
+  box-shadow: 0 0 0 6px var(--sun), inset 0 -6px 14px rgba(14, 35, 33, .07), var(--shadow);
 }
 .card.pop { animation: pop .28s cubic-bezier(.3, 1.6, .5, 1); }
 @keyframes pop { from { transform: scale(.82); opacity: .4; } to { transform: scale(1); opacity: 1; } }
 .mine { position: relative; }
+/* Two cards + HUD + banner + footer always fit; dvh follows the phone's visible area (address bar). */
+@supports (height: 100dvh) { .card { width: min(80vw, calc((100dvh - 250px) / 2)); } }
 .mine .card { position: relative; z-index: 1; }
 .stack-layer {
   position: absolute; inset: 0; border-radius: 50%; background: var(--card);
@@ -341,7 +405,28 @@ a.button-link {
 .fuse.hot { color: var(--coral); animation: pulse .5s ease-in-out infinite alternate; }
 @keyframes pulse { to { transform: scale(1.08); } }
 
+/* Short phones (≈640 px tall) with a full room: tighter spacing and smaller cards so it all fits. */
+@media (max-height: 720px) {
+  .game { gap: 6px; padding-top: calc(env(safe-area-inset-top) + 8px); padding-bottom: calc(env(safe-area-inset-bottom) + 8px); }
+  .game .banner { min-height: 36px; }
+  .game.gift:has(.opponents[data-count="5"], .opponents[data-count="6"], .opponents[data-count="7"]) > .card { width: min(46vw, 18vh); }
+  .game:is(.gift, .potato) .opponents[data-count="5"] .opponent .card,
+  .game:is(.gift, .potato) .opponents[data-count="6"] .opponent .card,
+  .game:is(.gift, .potato) .opponents[data-count="7"] .opponent .card { width: min(100%, 14vh); }
+  .game.potato:has(.opponents[data-count="5"], .opponents[data-count="6"], .opponents[data-count="7"]) .mine .card { width: min(44vw, 17vh); }
+  .opponents { gap: 4px 8px !important; }
+  .opponent { gap: 2px; }
+  .opponent figcaption { font-size: .85rem; }
+}
+
 /* ============ results ============ */
+.ranking li { animation: enter .35s ease-out both; }
+.confetti { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 30; }
+.confetti i {
+  position: absolute; top: -16px; left: var(--x); width: 8px; height: 14px; border-radius: 2px; background: var(--c);
+  animation: fall var(--d) var(--delay) cubic-bezier(.2, .6, .4, 1) forwards;
+}
+@keyframes fall { to { transform: translate(var(--drift), 105vh) rotate(var(--r)); } }
 .results { text-align: center; }
 .trophy { font-size: 4rem; line-height: 1; animation: count .7s ease-out; }
 .mode-tag { margin: 0; opacity: .75; font-weight: 700; }
@@ -375,6 +460,24 @@ a.button-link {
   100% { transform: translate(-50%, -45vh) scale(1); opacity: 0; }
 }
 .game-foot { display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 8px; }
+
+/* Tap feedback at the finger: a ring for a match, a ✕ for a miss; the tapped card shakes on a miss. */
+.tap-fx { position: fixed; inset: 0; pointer-events: none; z-index: 12; }
+.fx { position: fixed; transform: translate(-50%, -50%); }
+.fx.hit {
+  width: 84px; height: 84px; border-radius: 50%; border: 4px solid var(--sun);
+  box-shadow: 0 0 18px var(--sun); animation: burst .45s ease-out forwards;
+}
+.fx.miss {
+  font-size: 2.6rem; font-weight: 800; color: var(--coral); line-height: 1;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, .3); animation: miss .5s ease-out forwards;
+}
+@keyframes burst { from { transform: translate(-50%, -50%) scale(.25); opacity: 1; } to { transform: translate(-50%, -50%) scale(1.5); opacity: 0; } }
+@keyframes miss { 0% { transform: translate(-50%, -50%) scale(.5); opacity: 0; } 25% { transform: translate(-50%, -50%) scale(1.15); opacity: 1; } 100% { transform: translate(-50%, -80%) scale(1); opacity: 0; } }
+.shake { animation: shake .32s ease-in-out; }
+@keyframes shake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-9px); } 40%, 80% { transform: translateX(9px); } }
+.bump { display: inline-block; animation: bump .35s ease-out; }
+@keyframes bump { 40% { transform: scale(1.45); color: var(--sun); } }
 .spectators { margin: 0; font-size: .92rem; opacity: .75; text-align: center; }
 .watch-tag { margin: 0; display: flex; align-items: center; justify-content: center; gap: 6px; font-weight: 700; color: var(--sun); }
 .watch-hint { margin-top: -10px; }
@@ -425,6 +528,7 @@ a.button-link {
 /* ============ motion ============ */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
+  .confetti, .tap-fx .hit { display: none; }
   .symbol:active:not(:disabled) { scale: 1; }
   .banner.show { transform: none; }
 }

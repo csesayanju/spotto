@@ -30,6 +30,7 @@ export function Lobby({ code, room, uid, onLeave }: Props) {
   const penalty = room.meta.penaltyMs ?? CONFIG.penaltyMs;
   const theme = room.meta.theme ?? "classic";
   const [kicking, setKicking] = useState<{ id: string; name: string } | null>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const wins = room.meta.wins ?? {};
 
 
@@ -42,67 +43,25 @@ export function Lobby({ code, room, uid, onLeave }: Props) {
     } catch { /* cancelled */ }
   }
 
+  const summary = [
+    LENGTH_INFO[length].name,
+    MATCH_INFO[match].name === "Single" ? "Single game" : MATCH_INFO[match].name,
+    `${THEME_INFO[theme].icon} ${THEME_INFO[theme].name}`,
+    `${penalty / 1000}s penalty`,
+  ].join(" · ");
+
   return (
     <main className="screen lobby">
       <section className="code-box">
+        <div className="code-row">
+          <div>
+            <p className="code-label">Room code</p>
+            <button className="room-code" onClick={share} aria-label={`Room code ${code}, tap to share`}>{code}</button>
+          </div>
+          <button className="share-btn" onClick={share}>{shared ? "✓ Copied" : "Invite 🔗"}</button>
+        </div>
         <span className="device-toggles"><BigSymbolsToggle /><SoundToggle /></span>
-        <p>Room code</p>
-        <button className="room-code" onClick={share} aria-label={`Room code ${code}, tap to share`}>{code}</button>
-        <p className="hint">{shared ? "Link copied! Send it to your friends." : "Tap the code to share an invite link"}</p>
       </section>
-
-      <fieldset className="modes" disabled={!isHost}>
-        <legend>{isHost ? "Pick a mode" : "Mode (the host picks)"}</legend>
-        {MODE_ORDER.map((m) => (
-          <label key={m} className={m === mode ? "mode on" : "mode"}>
-            <input type="radio" name="mode" checked={m === mode} onChange={() => setMode(code, m)} />
-            <span className="mode-icon" aria-hidden>{MODE_INFO[m].icon}</span>
-            <strong>{MODE_INFO[m].name}</strong>
-          </label>
-        ))}
-      </fieldset>
-      <p className="mode-desc">
-        {MODE_INFO[mode].tagline}{" "}
-        <button className="link inline" onClick={() => setRules(true)}>How to play</button>
-      </p>
-
-      <div className="lengths" role="radiogroup" aria-label="Game length">
-        {(Object.keys(LENGTH_INFO) as GameLength[]).map((l) => (
-          <button key={l} role="radio" aria-checked={l === length} className={l === length ? "on" : ""}
-            disabled={!isHost} onClick={() => setLength(code, l)}>
-            {LENGTH_INFO[l].name}<small>{CONFIG.lengthCards[l]} cards</small>
-          </button>
-        ))}
-      </div>
-      <div className="lengths" role="radiogroup" aria-label="Match length">
-        {(Object.keys(MATCH_INFO) as MatchLength[]).map((m) => (
-          <button key={m} role="radio" aria-checked={m === match} className={m === match ? "on" : ""}
-            disabled={!isHost} onClick={() => setMatch(code, m)}>
-            {MATCH_INFO[m].name}<small>{MATCH_INFO[m].hint}</small>
-          </button>
-        ))}
-      </div>
-      <div className="lengths" role="radiogroup" aria-label="Symbols">
-        {(Object.keys(THEME_INFO) as SymbolTheme[]).map((t) => (
-          <button key={t} role="radio" aria-checked={t === theme} className={t === theme ? "on" : ""}
-            disabled={!isHost} onClick={() => setTheme(code, t)}>
-            {THEME_INFO[t].icon} {THEME_INFO[t].name}<small>symbols</small>
-          </button>
-        ))}
-      </div>
-      <div className="lengths" role="radiogroup" aria-label="Wrong-tap penalty">
-        {CONFIG.penaltyChoices.map((ms) => (
-          <button key={ms} role="radio" aria-checked={ms === penalty} className={ms === penalty ? "on" : ""}
-            disabled={!isHost} onClick={() => setPenalty(code, ms)}>
-            {ms / 1000}s<small>{ms < CONFIG.penaltyMs ? "gentle" : ms > CONFIG.penaltyMs ? "tough" : "penalty"}</small>
-          </button>
-        ))}
-      </div>
-      {midMatch && (
-        <p className="hint center">
-          Match so far: {players.filter(([id]) => matchWins[id]).map(([id, p]) => `${p.name} ${matchWins[id]}`).join(" · ")}
-        </p>
-      )}
 
       <h2 className="section-title">
         Players <span>{players.length}/{CONFIG.maxPlayers} · {readyCount} ready</span>
@@ -124,18 +83,89 @@ export function Lobby({ code, room, uid, onLeave }: Props) {
           </li>
         ))}
       </ul>
+      {players.length < 2 && <p className="hint center">Share the code: you need at least one friend to play.</p>}
       <Spectators room={room} uid={uid} onKick={isHost ? (id, name) => setKicking({ id, name }) : undefined} />
-      <ReactionBar code={code} role="players" />
-      <button className={me.ready ? "" : "ready-btn"} onClick={() => setReady(code, !me.ready)}>
-        {me.ready ? "Not ready" : "I'm ready"}
-      </button>
-      {!isHost && <p className="hint center">The host starts the game when everyone is ready.</p>}
-      {isHost && (
-        <button className="primary" disabled={!allReady} onClick={() => startGame(code, room)}>
-          {players.length < 2 ? "Waiting for players" : allReady ? `Start ${MODE_INFO[mode].name}` : "Waiting for everyone to be ready"}
+
+      <fieldset className="modes" disabled={!isHost}>
+        <legend>{isHost ? "Mode" : "Mode (the host picks)"}</legend>
+        {MODE_ORDER.map((m) => (
+          <label key={m} className={m === mode ? "mode on" : "mode"}>
+            <input type="radio" name="mode" checked={m === mode} onChange={() => setMode(code, m)} />
+            <span className="mode-icon" aria-hidden>{MODE_INFO[m].icon}</span>
+            <strong>{MODE_INFO[m].name}</strong>
+          </label>
+        ))}
+      </fieldset>
+      <p className="mode-desc">
+        {MODE_INFO[mode].tagline}{" "}
+        <button className="link inline" onClick={() => setRules(true)}>How to play</button>
+      </p>
+
+      <section className={settingsOpen ? "settings open" : "settings"}>
+        <button className="settings-summary" onClick={() => isHost && setSettingsOpen((o) => !o)} disabled={!isHost}
+          aria-expanded={settingsOpen}>
+          <span aria-hidden>⚙️</span>
+          <span className="settings-text">{summary}</span>
+          {isHost && <span className="settings-edit">{settingsOpen ? "Done" : "Change"}</span>}
         </button>
+        {settingsOpen && (
+          <div className="settings-body">
+            <div className="lengths" role="radiogroup" aria-label="Game length">
+              {(Object.keys(LENGTH_INFO) as GameLength[]).map((l) => (
+                <button key={l} role="radio" aria-checked={l === length} className={l === length ? "on" : ""}
+                  onClick={() => setLength(code, l)}>
+                  {LENGTH_INFO[l].name}<small>{CONFIG.lengthCards[l]} cards</small>
+                </button>
+              ))}
+            </div>
+            <div className="lengths" role="radiogroup" aria-label="Match length">
+              {(Object.keys(MATCH_INFO) as MatchLength[]).map((m) => (
+                <button key={m} role="radio" aria-checked={m === match} className={m === match ? "on" : ""}
+                  onClick={() => setMatch(code, m)}>
+                  {MATCH_INFO[m].name}<small>{MATCH_INFO[m].hint}</small>
+                </button>
+              ))}
+            </div>
+            <div className="lengths" role="radiogroup" aria-label="Symbols">
+              {(Object.keys(THEME_INFO) as SymbolTheme[]).map((t) => (
+                <button key={t} role="radio" aria-checked={t === theme} className={t === theme ? "on" : ""}
+                  onClick={() => setTheme(code, t)}>
+                  {THEME_INFO[t].icon} {THEME_INFO[t].name}<small>symbols</small>
+                </button>
+              ))}
+            </div>
+            <div className="lengths" role="radiogroup" aria-label="Wrong-tap penalty">
+              {CONFIG.penaltyChoices.map((ms) => (
+                <button key={ms} role="radio" aria-checked={ms === penalty} className={ms === penalty ? "on" : ""}
+                  onClick={() => setPenalty(code, ms)}>
+                  {ms / 1000}s<small>{ms < CONFIG.penaltyMs ? "gentle" : ms > CONFIG.penaltyMs ? "tough" : "penalty"}</small>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </section>
+      {midMatch && (
+        <p className="hint center">
+          Match so far: {players.filter(([id]) => matchWins[id]).map(([id, p]) => `${p.name} ${matchWins[id]}`).join(" · ")}
+        </p>
       )}
+
+      <ReactionBar code={code} role="players" />
       <button className="link" onClick={onLeave}>Leave room</button>
+
+      <div className="action-bar">
+        <button className={me.ready ? "" : "ready-btn"} onClick={() => setReady(code, !me.ready)}>
+          {me.ready ? "Not ready" : "I'm ready"}
+        </button>
+        {isHost ? (
+          <button className="primary" disabled={!allReady} onClick={() => startGame(code, room)}>
+            {players.length < 2 ? "Need 2 players" : allReady ? `Start ${MODE_INFO[mode].name}` : `${readyCount}/${players.length} ready`}
+          </button>
+        ) : (
+          <p className="hint">{allReady ? "Waiting for the host to start…" : "The host starts when everyone's ready"}</p>
+        )}
+      </div>
       {rules && <HowToPlay initial={mode} onClose={() => setRules(false)} />}
       {kicking && (
         <ConfirmSheet title={`Remove ${kicking.name}?`} message="They'll leave the room. They can join again with the code."

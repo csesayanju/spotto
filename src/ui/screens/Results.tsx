@@ -5,6 +5,7 @@ import { nextGame } from "../../net/game";
 import { resetToLobby } from "../../net/rooms";
 import type { Room } from "../../shared/types";
 import { Avatar } from "../components/Avatar";
+import { Confetti } from "../components/Confetti";
 import { ReactionBar } from "../components/Reactions";
 import { roleIn } from "../../net/rooms";
 import { MATCH_INFO, MODE_INFO } from "../modes";
@@ -48,6 +49,7 @@ export function Results({ code, room, uid, onLeave }: Props) {
 
   return (
     <main className="screen results">
+      {(matchOver ? champions.includes(uid) : iWon) && <Confetti pieces={matchOver ? 90 : 45} />}
       <div className={matchOver ? "trophy big" : "trophy"} aria-hidden>{matchOver ? "👑" : "🏆"}</div>
       <p className="mode-tag">{info.icon} {info.name}{inMatch && ` · ${MATCH_INFO[match].name}`}</p>
       {matchOver
@@ -64,7 +66,8 @@ export function Results({ code, room, uid, onLeave }: Props) {
         {ranked.map(([id, p]) => {
           const i = place(p.score);
           return (
-            <li key={id} className={[i === 0 && "first", id === uid && "me"].filter(Boolean).join(" ")}>
+            <li key={id} className={[i === 0 && "first", id === uid && "me"].filter(Boolean).join(" ")}
+              style={{ animationDelay: `${0.12 + ranked.findIndex(([k]) => k === id) * 0.06}s` }}>
               <span className="medal">{medal(i)}</span>
               <Avatar id={id} name={p.name} size={32} />
               <span className="who">{p.name}{id === uid && <small> (you)</small>}</span>

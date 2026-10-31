@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.9.0
+
+UI revamp, guided by the new game UI specialist skill (`.claude/skills/game-ui-specialist`).
+
+- Game screens fit every phone: one compact, scrollable score row (was up to 3 rows) and cards sized to the screen height. Fixes the reactions and Leave button being pushed off-screen with 6+ players, and full Gift/Potato rooms on small phones
+- Tap feedback where your finger lands: a burst ring on a match, a red ✕ and a shake on a miss; your score bumps when it changes
+- Lobby: player list first, game settings folded into one summary line the host can open, Ready/Start pinned to the bottom of the screen, Start shows how many are ready
+- Home: "Play with friends" panel and a "Play solo" row (Daily, Practice), with How to play and Stats as quick links
+- Look and feel: felt texture, cards with depth, screens fade and slide in, results rows slide in
+- Confetti for the winner, a bigger burst for a match win
+- Reduced-motion settings hide confetti and bursts but keep all feedback
+
 ## 0.8.1
 
 - Developer analytics page (📈, admins only): live rooms, players per day, games, players per game, game length, busiest hours, modes, themes, platforms (website / installed / APK), devices, app versions; 7, 14 or 30 days
